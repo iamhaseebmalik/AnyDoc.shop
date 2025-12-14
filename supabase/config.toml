@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.cleanup-expired-documents]
 verify_jwt = false
+
+[functions.edit-document]
+verify_jwt = false
