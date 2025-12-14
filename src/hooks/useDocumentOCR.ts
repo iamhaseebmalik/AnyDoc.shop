@@ -6,7 +6,16 @@ export interface AdditionalField {
   value: string;
 }
 
+export interface DetectedTextItem {
+  label: string;
+  value: string;
+  position?: string;
+}
+
 export interface ExtractedDocumentData {
+  // All detected text - primary source
+  allDetectedText?: DetectedTextItem[];
+  
   // Personal Information
   documentType?: string;
   fullName?: string;
