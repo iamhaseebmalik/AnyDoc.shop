@@ -14,12 +14,14 @@ import {
   ZoomOut,
   Check,
   Loader2,
-  Clock
+  Clock,
+  Sparkles
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useDocumentOCR, ExtractedDocumentData } from "@/hooks/useDocumentOCR";
 import { useDocumentStorage, UploadedDocument } from "@/hooks/useDocumentStorage";
+import { useDocumentEditor } from "@/hooks/useDocumentEditor";
 
 type EditorStep = "upload" | "detect" | "photo" | "text" | "compliance" | "export";
 
@@ -27,6 +29,7 @@ interface TextField {
   id: string;
   label: string;
   value: string;
+  originalValue: string;
   editable: boolean;
 }
 
@@ -45,9 +48,11 @@ const Editor = () => {
     imageQuality: true
   });
   const [textFields, setTextFields] = useState<TextField[]>([]);
+  const [editedDocumentUrl, setEditedDocumentUrl] = useState<string | null>(null);
 
   const { extractTextFromDocument, isExtracting, error: ocrError } = useDocumentOCR();
   const { uploadDocument, deleteDocument, isUploading, uploadProgress } = useDocumentStorage();
+  const { applyEdits, isEditing, error: editError } = useDocumentEditor();
 
   const steps = [
     { id: "upload", label: "Upload", icon: Upload },
@@ -81,48 +86,48 @@ const Editor = () => {
     const fields: TextField[] = [];
     
     if (data.fullName) {
-      fields.push({ id: "name", label: "Full Name", value: data.fullName, editable: true });
+      fields.push({ id: "name", label: "Full Name", value: data.fullName, originalValue: data.fullName, editable: true });
     }
     if (data.nationality) {
-      fields.push({ id: "nationality", label: "Nationality", value: data.nationality, editable: true });
+      fields.push({ id: "nationality", label: "Nationality", value: data.nationality, originalValue: data.nationality, editable: true });
     }
     if (data.dateOfBirth) {
-      fields.push({ id: "dob", label: "Date of Birth", value: data.dateOfBirth, editable: true });
+      fields.push({ id: "dob", label: "Date of Birth", value: data.dateOfBirth, originalValue: data.dateOfBirth, editable: true });
     }
     if (data.gender) {
-      fields.push({ id: "gender", label: "Gender", value: data.gender, editable: true });
+      fields.push({ id: "gender", label: "Gender", value: data.gender, originalValue: data.gender, editable: true });
     }
     if (data.documentNumber) {
-      fields.push({ id: "passport_no", label: "Document No.", value: data.documentNumber, editable: true });
+      fields.push({ id: "passport_no", label: "Document No.", value: data.documentNumber, originalValue: data.documentNumber, editable: true });
     }
     if (data.expiryDate) {
-      fields.push({ id: "expiry", label: "Expiry Date", value: data.expiryDate, editable: true });
+      fields.push({ id: "expiry", label: "Expiry Date", value: data.expiryDate, originalValue: data.expiryDate, editable: true });
     }
     if (data.issueDate) {
-      fields.push({ id: "issue", label: "Issue Date", value: data.issueDate, editable: true });
+      fields.push({ id: "issue", label: "Issue Date", value: data.issueDate, originalValue: data.issueDate, editable: true });
     }
     if (data.placeOfBirth) {
-      fields.push({ id: "pob", label: "Place of Birth", value: data.placeOfBirth, editable: true });
+      fields.push({ id: "pob", label: "Place of Birth", value: data.placeOfBirth, originalValue: data.placeOfBirth, editable: true });
     }
     if (data.placeOfIssue) {
-      fields.push({ id: "poi", label: "Place of Issue", value: data.placeOfIssue, editable: true });
+      fields.push({ id: "poi", label: "Place of Issue", value: data.placeOfIssue, originalValue: data.placeOfIssue, editable: true });
     }
     if (data.surname) {
-      fields.push({ id: "surname", label: "Surname", value: data.surname, editable: true });
+      fields.push({ id: "surname", label: "Surname", value: data.surname, originalValue: data.surname, editable: true });
     }
     if (data.givenNames) {
-      fields.push({ id: "given_names", label: "Given Names", value: data.givenNames, editable: true });
+      fields.push({ id: "given_names", label: "Given Names", value: data.givenNames, originalValue: data.givenNames, editable: true });
     }
 
     // If no fields extracted, provide placeholder
     if (fields.length === 0) {
       fields.push(
-        { id: "name", label: "Full Name", value: "", editable: true },
-        { id: "nationality", label: "Nationality", value: "", editable: true },
-        { id: "dob", label: "Date of Birth", value: "", editable: true },
-        { id: "gender", label: "Gender", value: "", editable: true },
-        { id: "passport_no", label: "Document No.", value: "", editable: true },
-        { id: "expiry", label: "Expiry Date", value: "", editable: true }
+        { id: "name", label: "Full Name", value: "", originalValue: "", editable: true },
+        { id: "nationality", label: "Nationality", value: "", originalValue: "", editable: true },
+        { id: "dob", label: "Date of Birth", value: "", originalValue: "", editable: true },
+        { id: "gender", label: "Gender", value: "", originalValue: "", editable: true },
+        { id: "passport_no", label: "Document No.", value: "", originalValue: "", editable: true },
+        { id: "expiry", label: "Expiry Date", value: "", originalValue: "", editable: true }
       );
     }
 
@@ -198,24 +203,24 @@ const Editor = () => {
           variant: "default"
         });
         setTextFields([
-          { id: "name", label: "Full Name", value: "", editable: true },
-          { id: "nationality", label: "Nationality", value: "", editable: true },
-          { id: "dob", label: "Date of Birth", value: "", editable: true },
-          { id: "gender", label: "Gender", value: "", editable: true },
-          { id: "passport_no", label: "Document No.", value: "", editable: true },
-          { id: "expiry", label: "Expiry Date", value: "", editable: true }
+          { id: "name", label: "Full Name", value: "", originalValue: "", editable: true },
+          { id: "nationality", label: "Nationality", value: "", originalValue: "", editable: true },
+          { id: "dob", label: "Date of Birth", value: "", originalValue: "", editable: true },
+          { id: "gender", label: "Gender", value: "", originalValue: "", editable: true },
+          { id: "passport_no", label: "Document No.", value: "", originalValue: "", editable: true },
+          { id: "expiry", label: "Expiry Date", value: "", originalValue: "", editable: true }
         ]);
         setCurrentStep("photo");
       }
     } else {
       // For PDFs, provide placeholder fields
       setTextFields([
-        { id: "name", label: "Full Name", value: "", editable: true },
-        { id: "nationality", label: "Nationality", value: "", editable: true },
-        { id: "dob", label: "Date of Birth", value: "", editable: true },
-        { id: "gender", label: "Gender", value: "", editable: true },
-        { id: "passport_no", label: "Document No.", value: "", editable: true },
-        { id: "expiry", label: "Expiry Date", value: "", editable: true }
+        { id: "name", label: "Full Name", value: "", originalValue: "", editable: true },
+        { id: "nationality", label: "Nationality", value: "", originalValue: "", editable: true },
+        { id: "dob", label: "Date of Birth", value: "", originalValue: "", editable: true },
+        { id: "gender", label: "Gender", value: "", originalValue: "", editable: true },
+        { id: "passport_no", label: "Document No.", value: "", originalValue: "", editable: true },
+        { id: "expiry", label: "Expiry Date", value: "", originalValue: "", editable: true }
       ]);
       toast({
         title: "PDF detected",
@@ -235,6 +240,7 @@ const Editor = () => {
     setPreviewUrl(null);
     setUploadedDocument(null);
     setTextFields([]);
+    setEditedDocumentUrl(null);
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -561,8 +567,55 @@ const Editor = () => {
         );
 
       case "export":
+        const hasEdits = textFields.some(f => f.value !== f.originalValue);
+        
+        const handleApplyEdits = async () => {
+          if (!uploadedFile) {
+            toast({
+              title: "No document",
+              description: "Please upload a document first.",
+              variant: "destructive"
+            });
+            return;
+          }
+
+          toast({
+            title: "Applying edits",
+            description: "AI is updating your document with the new text..."
+          });
+
+          const originalFields = textFields.map(f => ({ 
+            id: f.id, 
+            label: f.label, 
+            value: f.originalValue 
+          }));
+          const editedFields = textFields.map(f => ({ 
+            id: f.id, 
+            label: f.label, 
+            value: f.value 
+          }));
+
+          const resultUrl = await applyEdits(uploadedFile, originalFields, editedFields);
+          
+          if (resultUrl) {
+            setEditedDocumentUrl(resultUrl);
+            toast({
+              title: "Edits applied",
+              description: "Your document has been updated successfully."
+            });
+          } else {
+            toast({
+              title: "Edit failed",
+              description: editError || "Failed to apply edits. You can still download the original.",
+              variant: "destructive"
+            });
+          }
+        };
+
         const handleDownload = async (format: string) => {
-          if (!previewUrl) {
+          const downloadUrl = editedDocumentUrl || previewUrl;
+          
+          if (!downloadUrl) {
             toast({
               title: "No document",
               description: "Please upload a document first.",
@@ -574,11 +627,11 @@ const Editor = () => {
           try {
             toast({
               title: "Preparing download",
-              description: `Converting to ${format}...`
+              description: `Downloading as ${format}...`
             });
 
-            // Fetch the image from the signed URL
-            const response = await fetch(previewUrl);
+            // Fetch the image
+            const response = await fetch(downloadUrl);
             const blob = await response.blob();
 
             // Create download link
@@ -612,16 +665,56 @@ const Editor = () => {
           <div className="flex-1 flex items-center justify-center p-6">
             <div className="w-full max-w-lg bg-card rounded-xl border border-border p-8 text-center">
               <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center mx-auto mb-4">
-                <Download className="w-8 h-8 text-accent-foreground" />
+                {isEditing ? (
+                  <Loader2 className="w-8 h-8 text-accent-foreground animate-spin" />
+                ) : editedDocumentUrl ? (
+                  <Check className="w-8 h-8 text-accent-foreground" />
+                ) : (
+                  <Download className="w-8 h-8 text-accent-foreground" />
+                )}
               </div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
-                Your Document is Ready
+                {isEditing 
+                  ? "Applying Edits..." 
+                  : editedDocumentUrl 
+                    ? "Document Ready!" 
+                    : "Export Your Document"}
               </h3>
-              <p className="text-muted-foreground mb-8">
-                Download your edited document in your preferred format
+              <p className="text-muted-foreground mb-6">
+                {isEditing 
+                  ? "AI is updating the document with your text changes" 
+                  : editedDocumentUrl 
+                    ? "Your edited document is ready for download" 
+                    : hasEdits 
+                      ? "Apply your text edits before downloading" 
+                      : "Download your document in your preferred format"}
               </p>
 
-              <div className="grid grid-cols-3 gap-4 mb-8">
+              {/* Show Apply Edits button if there are changes and not yet applied */}
+              {hasEdits && !editedDocumentUrl && !isEditing && (
+                <Button 
+                  variant="accent" 
+                  size="lg" 
+                  className="w-full mb-6"
+                  onClick={handleApplyEdits}
+                >
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Apply AI Edits to Document
+                </Button>
+              )}
+
+              {/* Show loading state */}
+              {isEditing && (
+                <div className="mb-6 p-4 bg-accent/10 rounded-lg">
+                  <div className="flex items-center justify-center gap-2 text-accent">
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Processing with AI...</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Download buttons */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
                 {[
                   { format: "PNG", desc: "High Resolution" },
                   { format: "JPG", desc: "Compressed" },
@@ -632,6 +725,7 @@ const Editor = () => {
                     variant="outline" 
                     className="flex-col h-auto py-4"
                     onClick={() => handleDownload(option.format)}
+                    disabled={isEditing}
                   >
                     <span className="font-bold">{option.format}</span>
                     <span className="text-xs text-muted-foreground">{option.desc}</span>
@@ -639,7 +733,13 @@ const Editor = () => {
                 ))}
               </div>
 
-              <Button variant="ghost" onClick={handleResetEditor}>
+              {!editedDocumentUrl && hasEdits && (
+                <p className="text-xs text-muted-foreground mb-4">
+                  Download without edits, or click "Apply AI Edits" first
+                </p>
+              )}
+
+              <Button variant="ghost" onClick={handleResetEditor} disabled={isEditing}>
                 Edit Another Document
               </Button>
             </div>
