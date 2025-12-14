@@ -38,6 +38,8 @@ export const useDocumentEditor = () => {
         return originalUrl;
       }
 
+      console.log("Calling edit-document with", textEdits.length, "edits");
+      
       const { data, error: fnError } = await supabase.functions.invoke("edit-document", {
         body: {
           imageBase64: base64,
@@ -46,15 +48,20 @@ export const useDocumentEditor = () => {
         },
       });
 
+      console.log("Edit document response:", data, "Error:", fnError);
+
       if (fnError) {
+        console.error("Function error:", fnError);
         throw new Error(fnError.message);
       }
 
       if (!data.success) {
+        console.error("Edit failed:", data.error);
         throw new Error(data.error || "Failed to edit document");
       }
 
       const resultUrl = data.editedImageUrl || `data:image/png;base64,${data.editedImageBase64}`;
+      console.log("Edit successful, result URL length:", resultUrl?.length);
       setEditedImageUrl(resultUrl);
       return resultUrl;
     } catch (err) {
