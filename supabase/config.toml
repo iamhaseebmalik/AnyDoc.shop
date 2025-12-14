@@ -2,3 +2,6 @@ project_id = "embzotzsoggbgyuvfznk"
 
 [functions.extract-document-text]
 verify_jwt = false
+
+[functions.cleanup-expired-documents]
+verify_jwt = false
