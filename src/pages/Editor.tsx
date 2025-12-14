@@ -85,49 +85,80 @@ const Editor = () => {
   const mapExtractedDataToFields = (data: ExtractedDocumentData): TextField[] => {
     const fields: TextField[] = [];
     
-    if (data.fullName) {
-      fields.push({ id: "name", label: "Full Name", value: data.fullName, originalValue: data.fullName, editable: true });
-    }
-    if (data.nationality) {
-      fields.push({ id: "nationality", label: "Nationality", value: data.nationality, originalValue: data.nationality, editable: true });
-    }
-    if (data.dateOfBirth) {
-      fields.push({ id: "dob", label: "Date of Birth", value: data.dateOfBirth, originalValue: data.dateOfBirth, editable: true });
-    }
-    if (data.gender) {
-      fields.push({ id: "gender", label: "Gender", value: data.gender, originalValue: data.gender, editable: true });
-    }
-    if (data.documentNumber) {
-      fields.push({ id: "passport_no", label: "Document No.", value: data.documentNumber, originalValue: data.documentNumber, editable: true });
-    }
-    if (data.expiryDate) {
-      fields.push({ id: "expiry", label: "Expiry Date", value: data.expiryDate, originalValue: data.expiryDate, editable: true });
-    }
-    if (data.issueDate) {
-      fields.push({ id: "issue", label: "Issue Date", value: data.issueDate, originalValue: data.issueDate, editable: true });
-    }
-    if (data.placeOfBirth) {
-      fields.push({ id: "pob", label: "Place of Birth", value: data.placeOfBirth, originalValue: data.placeOfBirth, editable: true });
-    }
-    if (data.placeOfIssue) {
-      fields.push({ id: "poi", label: "Place of Issue", value: data.placeOfIssue, originalValue: data.placeOfIssue, editable: true });
-    }
-    if (data.surname) {
-      fields.push({ id: "surname", label: "Surname", value: data.surname, originalValue: data.surname, editable: true });
-    }
-    if (data.givenNames) {
-      fields.push({ id: "given_names", label: "Given Names", value: data.givenNames, originalValue: data.givenNames, editable: true });
+    // Helper function to add field if value exists
+    const addField = (id: string, label: string, value: string | undefined) => {
+      if (value) {
+        fields.push({ id, label, value, originalValue: value, editable: true });
+      }
+    };
+
+    // Document Type
+    addField("documentType", "Document Type", data.documentType);
+    
+    // Personal Information - Primary
+    addField("surname", "Surname / Family Name", data.surname);
+    addField("givenNames", "Given Names / First Names", data.givenNames);
+    addField("fullName", "Full Name", data.fullName);
+    addField("dateOfBirth", "Date of Birth", data.dateOfBirth);
+    addField("placeOfBirth", "Place of Birth", data.placeOfBirth);
+    addField("gender", "Gender / Sex", data.gender);
+    addField("nationality", "Nationality", data.nationality);
+    addField("nationalityCode", "Nationality Code", data.nationalityCode);
+    
+    // Document Details
+    addField("documentNumber", "Document Number", data.documentNumber);
+    addField("issueDate", "Issue Date", data.issueDate);
+    addField("expiryDate", "Expiry Date", data.expiryDate);
+    addField("placeOfIssue", "Place of Issue", data.placeOfIssue);
+    addField("issuingAuthority", "Issuing Authority", data.issuingAuthority);
+    addField("issuingCountry", "Issuing Country", data.issuingCountry);
+    
+    // Additional Personal Details
+    addField("address", "Address", data.address);
+    addField("height", "Height", data.height);
+    addField("eyeColor", "Eye Color", data.eyeColor);
+    addField("bloodType", "Blood Type", data.bloodType);
+    addField("occupation", "Occupation", data.occupation);
+    addField("maritalStatus", "Marital Status", data.maritalStatus);
+    
+    // Family Information
+    addField("fatherName", "Father's Name", data.fatherName);
+    addField("motherName", "Mother's Name", data.motherName);
+    addField("spouseName", "Spouse Name", data.spouseName);
+    addField("emergencyContact", "Emergency Contact", data.emergencyContact);
+    
+    // Driving License Specific
+    addField("licenseClass", "License Class", data.licenseClass);
+    addField("restrictions", "Restrictions", data.restrictions);
+    
+    // Additional fields detected by AI
+    if (data.additionalFields && Array.isArray(data.additionalFields)) {
+      data.additionalFields.forEach((field, index) => {
+        if (field.label && field.value) {
+          fields.push({
+            id: `additional_${index}`,
+            label: field.label,
+            value: field.value,
+            originalValue: field.value,
+            editable: true
+          });
+        }
+      });
     }
 
-    // If no fields extracted, provide placeholder
+    // If no fields extracted, provide common placeholder fields
     if (fields.length === 0) {
       fields.push(
-        { id: "name", label: "Full Name", value: "", originalValue: "", editable: true },
-        { id: "nationality", label: "Nationality", value: "", originalValue: "", editable: true },
-        { id: "dob", label: "Date of Birth", value: "", originalValue: "", editable: true },
+        { id: "surname", label: "Surname / Family Name", value: "", originalValue: "", editable: true },
+        { id: "givenNames", label: "Given Names", value: "", originalValue: "", editable: true },
+        { id: "dateOfBirth", label: "Date of Birth", value: "", originalValue: "", editable: true },
         { id: "gender", label: "Gender", value: "", originalValue: "", editable: true },
-        { id: "passport_no", label: "Document No.", value: "", originalValue: "", editable: true },
-        { id: "expiry", label: "Expiry Date", value: "", originalValue: "", editable: true }
+        { id: "nationality", label: "Nationality", value: "", originalValue: "", editable: true },
+        { id: "documentNumber", label: "Document Number", value: "", originalValue: "", editable: true },
+        { id: "issueDate", label: "Issue Date", value: "", originalValue: "", editable: true },
+        { id: "expiryDate", label: "Expiry Date", value: "", originalValue: "", editable: true },
+        { id: "placeOfBirth", label: "Place of Birth", value: "", originalValue: "", editable: true },
+        { id: "placeOfIssue", label: "Place of Issue", value: "", originalValue: "", editable: true }
       );
     }
 
