@@ -561,6 +561,53 @@ const Editor = () => {
         );
 
       case "export":
+        const handleDownload = async (format: string) => {
+          if (!previewUrl) {
+            toast({
+              title: "No document",
+              description: "Please upload a document first.",
+              variant: "destructive"
+            });
+            return;
+          }
+
+          try {
+            toast({
+              title: "Preparing download",
+              description: `Converting to ${format}...`
+            });
+
+            // Fetch the image from the signed URL
+            const response = await fetch(previewUrl);
+            const blob = await response.blob();
+
+            // Create download link
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            
+            const fileName = uploadedFile?.name?.replace(/\.[^/.]+$/, "") || "document";
+            link.download = `${fileName}-edited.${format.toLowerCase()}`;
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            toast({
+              title: "Download complete",
+              description: `Your document has been downloaded as ${format}.`
+            });
+          } catch (error) {
+            console.error("Download error:", error);
+            toast({
+              title: "Download failed",
+              description: "Failed to download document. Please try again.",
+              variant: "destructive"
+            });
+          }
+        };
+
         return (
           <div className="flex-1 flex items-center justify-center p-6">
             <div className="w-full max-w-lg bg-card rounded-xl border border-border p-8 text-center">
@@ -584,10 +631,7 @@ const Editor = () => {
                     key={option.format}
                     variant="outline" 
                     className="flex-col h-auto py-4"
-                    onClick={() => toast({
-                      title: "Download started",
-                      description: `Downloading as ${option.format}...`
-                    })}
+                    onClick={() => handleDownload(option.format)}
                   >
                     <span className="font-bold">{option.format}</span>
                     <span className="text-xs text-muted-foreground">{option.desc}</span>
