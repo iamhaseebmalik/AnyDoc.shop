@@ -29,7 +29,7 @@ serve(async (req) => {
       );
     }
 
-    console.log("Processing document for OCR extraction...");
+    console.log("Processing document for comprehensive OCR extraction...");
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -42,47 +42,60 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are an expert OCR system specialized in extracting text from passport and ID documents. 
-            
-Extract ALL text fields visible in the document and return them in a structured JSON format. 
+            content: `You are an expert OCR system specialized in extracting ALL text from passport, ID cards, driving licenses, and other identity documents.
 
-For passport/ID documents, look for these common fields:
-- Full Name (given name + surname)
-- Nationality / Country
-- Date of Birth
-- Gender / Sex
-- Document Number (Passport No., ID No., etc.)
-- Issue Date
-- Expiry Date
-- Place of Birth
-- Place of Issue
-- MRZ (Machine Readable Zone) if visible
+Your task is to extract EVERY piece of text visible in the document. Be extremely thorough.
 
-Return ONLY a valid JSON object with the extracted fields. Use null for fields that are not visible or readable.
+Extract and return ALL of the following fields (use null if not visible):
 
-Example output format:
-{
-  "documentType": "PASSPORT",
-  "fullName": "JOHN DOE",
-  "surname": "DOE",
-  "givenNames": "JOHN",
-  "nationality": "UNITED STATES",
-  "dateOfBirth": "15 JAN 1990",
-  "gender": "M",
-  "documentNumber": "123456789",
-  "issueDate": "01 FEB 2020",
-  "expiryDate": "01 FEB 2030",
-  "placeOfBirth": "NEW YORK",
-  "placeOfIssue": "WASHINGTON D.C.",
-  "mrz": ["P<USADOE<<JOHN<<<<<<<<<<<<<<<<<<<<<<<<<<<", "1234567890USA9001150M3002015<<<<<<<<<<<<<<00"]
-}`
+PERSONAL INFORMATION:
+- surname (family name / last name)
+- givenNames (first name / middle names)
+- fullName (complete name as shown)
+- dateOfBirth (in original format shown)
+- placeOfBirth (city/country of birth)
+- gender (M/F/Male/Female as shown)
+- nationality (country of citizenship)
+- nationalityCode (country code like USA, GBR, etc.)
+
+DOCUMENT DETAILS:
+- documentType (PASSPORT, ID CARD, DRIVING LICENSE, etc.)
+- documentNumber (passport number, ID number, license number)
+- issueDate (date document was issued)
+- expiryDate (expiration date)
+- placeOfIssue (issuing authority/location)
+- issuingAuthority (who issued the document)
+- issuingCountry (country that issued document)
+
+ADDITIONAL FIELDS:
+- address (if shown on document)
+- height (if shown)
+- eyeColor (if shown)
+- signature (text near signature if any)
+- licenseClass (for driving licenses)
+- restrictions (for driving licenses)
+- bloodType (if shown)
+- emergencyContact (if shown)
+- fatherName (if shown)
+- motherName (if shown)
+- spouseName (if shown)
+- occupation (if shown)
+- maritalStatus (if shown)
+
+MACHINE READABLE ZONE:
+- mrz (array of MRZ lines if visible at bottom of document)
+
+ADDITIONAL TEXT:
+- additionalFields (array of any other text fields found with format: [{label: "Field Name", value: "Field Value"}])
+
+Return ONLY a valid JSON object. Extract the EXACT text as it appears on the document.`
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "Extract all text fields from this passport/ID document. Return the data as a JSON object."
+                text: "Extract ALL text fields from this identity document. Be thorough and extract every visible piece of text. Return as a comprehensive JSON object with all fields."
               },
               {
                 type: "image_url",
@@ -127,12 +140,15 @@ Example output format:
       );
     }
 
+    console.log("Raw AI response:", content.substring(0, 500));
+
     // Parse the JSON response from the AI
     let extractedData;
     try {
       // Remove markdown code blocks if present
       const jsonString = content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       extractedData = JSON.parse(jsonString);
+      console.log("Successfully parsed extracted data with", Object.keys(extractedData).length, "fields");
     } catch (parseError) {
       console.error("Failed to parse AI response as JSON:", parseError);
       // Return raw content if parsing fails
