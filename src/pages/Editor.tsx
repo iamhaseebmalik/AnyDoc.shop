@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Upload, 
@@ -9,17 +9,17 @@ import {
   ArrowLeft,
   Shield,
   AlertCircle,
-  X,
-  Palette,
   RotateCcw,
   ZoomIn,
   ZoomOut,
   Check,
-  Loader2
+  Loader2,
+  Clock
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useDocumentOCR, ExtractedDocumentData } from "@/hooks/useDocumentOCR";
+import { useDocumentStorage, UploadedDocument } from "@/hooks/useDocumentStorage";
 
 type EditorStep = "upload" | "detect" | "photo" | "text" | "compliance" | "export";
 
@@ -34,6 +34,7 @@ const Editor = () => {
   const [currentStep, setCurrentStep] = useState<EditorStep>("upload");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadedDocument, setUploadedDocument] = useState<UploadedDocument | null>(null);
   const [dragActive, setDragActive] = useState(false);
   const [selectedBackground, setSelectedBackground] = useState("white");
   const [complianceChecks, setComplianceChecks] = useState({
@@ -46,6 +47,7 @@ const Editor = () => {
   const [textFields, setTextFields] = useState<TextField[]>([]);
 
   const { extractTextFromDocument, isExtracting, error: ocrError } = useDocumentOCR();
+  const { uploadDocument, deleteDocument, isUploading, uploadProgress } = useDocumentStorage();
 
   const steps = [
     { id: "upload", label: "Upload", icon: Upload },
@@ -148,12 +150,31 @@ const Editor = () => {
     }
 
     setUploadedFile(file);
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
     setCurrentStep("detect");
     
     toast({
-      title: "Document uploaded",
+      title: "Uploading document",
+      description: "Securely storing your document..."
+    });
+
+    // Upload to secure storage
+    const uploaded = await uploadDocument(file);
+    
+    if (!uploaded) {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload document. Please try again.",
+        variant: "destructive"
+      });
+      setCurrentStep("upload");
+      return;
+    }
+
+    setUploadedDocument(uploaded);
+    setPreviewUrl(uploaded.signedUrl);
+    
+    toast({
+      title: "Document secured",
       description: "AI is analyzing your document..."
     });
 
@@ -188,22 +209,32 @@ const Editor = () => {
       }
     } else {
       // For PDFs, provide placeholder fields
-      setTimeout(() => {
-        setTextFields([
-          { id: "name", label: "Full Name", value: "", editable: true },
-          { id: "nationality", label: "Nationality", value: "", editable: true },
-          { id: "dob", label: "Date of Birth", value: "", editable: true },
-          { id: "gender", label: "Gender", value: "", editable: true },
-          { id: "passport_no", label: "Document No.", value: "", editable: true },
-          { id: "expiry", label: "Expiry Date", value: "", editable: true }
-        ]);
-        toast({
-          title: "PDF detected",
-          description: "Please enter document details manually."
-        });
-        setCurrentStep("photo");
-      }, 1500);
+      setTextFields([
+        { id: "name", label: "Full Name", value: "", editable: true },
+        { id: "nationality", label: "Nationality", value: "", editable: true },
+        { id: "dob", label: "Date of Birth", value: "", editable: true },
+        { id: "gender", label: "Gender", value: "", editable: true },
+        { id: "passport_no", label: "Document No.", value: "", editable: true },
+        { id: "expiry", label: "Expiry Date", value: "", editable: true }
+      ]);
+      toast({
+        title: "PDF detected",
+        description: "Please enter document details manually."
+      });
+      setCurrentStep("photo");
     }
+  };
+
+  const handleResetEditor = async () => {
+    // Delete uploaded document from storage if exists
+    if (uploadedDocument) {
+      await deleteDocument(uploadedDocument.storagePath, uploadedDocument.id);
+    }
+    setCurrentStep("upload");
+    setUploadedFile(null);
+    setPreviewUrl(null);
+    setUploadedDocument(null);
+    setTextFields([]);
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -269,18 +300,36 @@ const Editor = () => {
       case "detect":
         return (
           <div className="flex-1 flex items-center justify-center p-8">
-            <div className="text-center">
+            <div className="text-center max-w-md">
               <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-6">
                 <Loader2 className="w-10 h-10 text-accent animate-spin" />
               </div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
-                {isExtracting ? "Extracting Text with AI..." : "Analyzing Document..."}
+                {isUploading 
+                  ? "Uploading Securely..." 
+                  : isExtracting 
+                    ? "Extracting Text with AI..." 
+                    : "Analyzing Document..."}
               </h3>
-              <p className="text-muted-foreground">
-                {isExtracting 
-                  ? "Our AI is reading and extracting text from your document" 
-                  : "Our AI is detecting face, text fields, and document type"}
+              <p className="text-muted-foreground mb-4">
+                {isUploading 
+                  ? "Your document is being encrypted and stored securely" 
+                  : isExtracting 
+                    ? "Our AI is reading and extracting text from your document" 
+                    : "Our AI is detecting face, text fields, and document type"}
               </p>
+              {isUploading && (
+                <div className="w-full bg-secondary rounded-full h-2 mb-4">
+                  <div 
+                    className="bg-accent h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              )}
+              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                <Clock className="w-3 h-3" />
+                <span>Auto-deletes in 24 hours</span>
+              </div>
               {ocrError && (
                 <div className="mt-4 p-3 bg-destructive/10 rounded-lg">
                   <p className="text-sm text-destructive">{ocrError}</p>
@@ -546,11 +595,7 @@ const Editor = () => {
                 ))}
               </div>
 
-              <Button variant="ghost" onClick={() => {
-                setCurrentStep("upload");
-                setUploadedFile(null);
-                setPreviewUrl(null);
-              }}>
+              <Button variant="ghost" onClick={handleResetEditor}>
                 Edit Another Document
               </Button>
             </div>
