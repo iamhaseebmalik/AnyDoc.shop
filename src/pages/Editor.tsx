@@ -84,18 +84,35 @@ const Editor = () => {
 
   const mapExtractedDataToFields = (data: ExtractedDocumentData): TextField[] => {
     const fields: TextField[] = [];
+    const addedValues = new Set<string>(); // Prevent duplicates
     
-    // Helper function to add field if value exists
+    // Helper function to add field if value exists and not duplicate
     const addField = (id: string, label: string, value: string | undefined) => {
-      if (value) {
+      if (value && !addedValues.has(value.toLowerCase().trim())) {
+        addedValues.add(value.toLowerCase().trim());
         fields.push({ id, label, value, originalValue: value, editable: true });
       }
     };
 
-    // Document Type
+    // PRIORITY 1: Use allDetectedText array if available (most comprehensive)
+    if (data.allDetectedText && Array.isArray(data.allDetectedText) && data.allDetectedText.length > 0) {
+      console.log("Using allDetectedText array with", data.allDetectedText.length, "items");
+      data.allDetectedText.forEach((item, index) => {
+        if (item.value && !addedValues.has(item.value.toLowerCase().trim())) {
+          addedValues.add(item.value.toLowerCase().trim());
+          fields.push({
+            id: `detected_${index}`,
+            label: item.label || `Field ${index + 1}`,
+            value: item.value,
+            originalValue: item.value,
+            editable: true
+          });
+        }
+      });
+    }
+
+    // PRIORITY 2: Add structured fields if not already in allDetectedText
     addField("documentType", "Document Type", data.documentType);
-    
-    // Personal Information - Primary
     addField("surname", "Surname / Family Name", data.surname);
     addField("givenNames", "Given Names / First Names", data.givenNames);
     addField("fullName", "Full Name", data.fullName);
@@ -104,40 +121,49 @@ const Editor = () => {
     addField("gender", "Gender / Sex", data.gender);
     addField("nationality", "Nationality", data.nationality);
     addField("nationalityCode", "Nationality Code", data.nationalityCode);
-    
-    // Document Details
     addField("documentNumber", "Document Number", data.documentNumber);
     addField("issueDate", "Issue Date", data.issueDate);
     addField("expiryDate", "Expiry Date", data.expiryDate);
     addField("placeOfIssue", "Place of Issue", data.placeOfIssue);
     addField("issuingAuthority", "Issuing Authority", data.issuingAuthority);
     addField("issuingCountry", "Issuing Country", data.issuingCountry);
-    
-    // Additional Personal Details
     addField("address", "Address", data.address);
     addField("height", "Height", data.height);
     addField("eyeColor", "Eye Color", data.eyeColor);
     addField("bloodType", "Blood Type", data.bloodType);
     addField("occupation", "Occupation", data.occupation);
     addField("maritalStatus", "Marital Status", data.maritalStatus);
-    
-    // Family Information
     addField("fatherName", "Father's Name", data.fatherName);
     addField("motherName", "Mother's Name", data.motherName);
     addField("spouseName", "Spouse Name", data.spouseName);
     addField("emergencyContact", "Emergency Contact", data.emergencyContact);
-    
-    // Driving License Specific
     addField("licenseClass", "License Class", data.licenseClass);
     addField("restrictions", "Restrictions", data.restrictions);
+    
+    // Add MRZ lines if present
+    if (data.mrz && Array.isArray(data.mrz)) {
+      data.mrz.forEach((line, index) => {
+        if (line && !addedValues.has(line.toLowerCase().trim())) {
+          addedValues.add(line.toLowerCase().trim());
+          fields.push({
+            id: `mrz_${index}`,
+            label: `MRZ Line ${index + 1}`,
+            value: line,
+            originalValue: line,
+            editable: true
+          });
+        }
+      });
+    }
     
     // Additional fields detected by AI
     if (data.additionalFields && Array.isArray(data.additionalFields)) {
       data.additionalFields.forEach((field, index) => {
-        if (field.label && field.value) {
+        if (field.value && !addedValues.has(field.value.toLowerCase().trim())) {
+          addedValues.add(field.value.toLowerCase().trim());
           fields.push({
             id: `additional_${index}`,
-            label: field.label,
+            label: field.label || `Additional Field ${index + 1}`,
             value: field.value,
             originalValue: field.value,
             editable: true
@@ -145,6 +171,8 @@ const Editor = () => {
         }
       });
     }
+
+    console.log("Total fields mapped:", fields.length);
 
     // If no fields extracted, provide common placeholder fields
     if (fields.length === 0) {
@@ -511,28 +539,59 @@ const Editor = () => {
 
             {/* Text Editor */}
             <div className="bg-card rounded-xl border border-border p-6">
-              <h3 className="font-semibold text-foreground mb-4">Edit Text Fields</h3>
-              <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                {textFields.length > 0 ? textFields.map((field) => (
-                  <div key={field.id}>
-                    <label className="text-sm font-medium text-muted-foreground mb-1 block">
-                      {field.label}
-                    </label>
-                    <input
-                      type="text"
-                      value={field.value}
-                      onChange={(e) => {
-                        setTextFields(prev => 
-                          prev.map(f => f.id === field.id ? { ...f, value: e.target.value } : f)
-                        );
-                      }}
-                      className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
-                    />
-                  </div>
-                )) : (
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-semibold text-foreground">All Detected Text Fields</h3>
+                <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded">
+                  {textFields.length} fields detected
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Edit any field below. Changed fields will be highlighted.
+              </p>
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                {textFields.length > 0 ? textFields.map((field) => {
+                  const isEdited = field.value !== field.originalValue;
+                  return (
+                    <div 
+                      key={field.id} 
+                      className={`p-3 rounded-lg border transition-all ${
+                        isEdited 
+                          ? "border-accent bg-accent/5" 
+                          : "border-border bg-background"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          {field.label}
+                        </label>
+                        {isEdited && (
+                          <span className="text-[10px] text-accent font-medium px-1.5 py-0.5 bg-accent/20 rounded">
+                            EDITED
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        type="text"
+                        value={field.value}
+                        onChange={(e) => {
+                          setTextFields(prev => 
+                            prev.map(f => f.id === field.id ? { ...f, value: e.target.value } : f)
+                          );
+                        }}
+                        className="w-full h-9 px-3 rounded-md border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+                        placeholder={field.originalValue || "Enter value..."}
+                      />
+                      {isEdited && field.originalValue && (
+                        <p className="text-[10px] text-muted-foreground mt-1 line-through">
+                          Original: {field.originalValue}
+                        </p>
+                      )}
+                    </div>
+                  );
+                }) : (
                   <div className="text-center py-8 text-muted-foreground">
                     <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                    <p>No text fields detected. You can add them manually.</p>
+                    <p>No text fields detected. Upload a document to start.</p>
                   </div>
                 )}
               </div>

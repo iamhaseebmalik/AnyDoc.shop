@@ -42,60 +42,58 @@ serve(async (req) => {
         messages: [
           {
             role: "system",
-            content: `You are an expert OCR system specialized in extracting ALL text from passport, ID cards, driving licenses, and other identity documents.
+            content: `You are a highly accurate OCR system. Your ONLY task is to extract EVERY piece of visible text from identity documents (passports, ID cards, driving licenses).
 
-Your task is to extract EVERY piece of text visible in the document. Be extremely thorough.
+CRITICAL INSTRUCTIONS:
+1. Read EVERY text element visible on the document - labels AND their values
+2. Extract the EXACT text as shown - do not translate, correct, or modify anything
+3. Include ALL text: headers, labels, values, codes, dates, numbers, stamps, watermarks
+4. For each piece of text, identify what it represents
 
-Extract and return ALL of the following fields (use null if not visible):
+Return a JSON object with these fields. Use null for fields not visible:
 
-PERSONAL INFORMATION:
-- surname (family name / last name)
-- givenNames (first name / middle names)
-- fullName (complete name as shown)
-- dateOfBirth (in original format shown)
-- placeOfBirth (city/country of birth)
-- gender (M/F/Male/Female as shown)
-- nationality (country of citizenship)
-- nationalityCode (country code like USA, GBR, etc.)
+{
+  "allDetectedText": [
+    {"label": "LABEL_AS_SHOWN", "value": "VALUE_AS_SHOWN", "position": "top/middle/bottom/left/right"}
+  ],
+  "documentType": "PASSPORT/ID CARD/DRIVING LICENSE/etc",
+  "surname": "exact surname text",
+  "givenNames": "exact given names text", 
+  "fullName": "full name if shown as single field",
+  "dateOfBirth": "exact date format shown",
+  "placeOfBirth": "exact place text",
+  "gender": "M/F/MALE/FEMALE as shown",
+  "nationality": "exact nationality text",
+  "nationalityCode": "country code if shown",
+  "documentNumber": "exact document number",
+  "issueDate": "exact issue date",
+  "expiryDate": "exact expiry date",
+  "placeOfIssue": "exact place of issue",
+  "issuingAuthority": "issuing authority text",
+  "issuingCountry": "country name",
+  "address": "full address if shown",
+  "height": "height if shown",
+  "eyeColor": "eye color if shown",
+  "bloodType": "blood type if shown",
+  "licenseClass": "license class/category",
+  "restrictions": "restrictions if shown",
+  "fatherName": "father name if shown",
+  "motherName": "mother name if shown",
+  "spouseName": "spouse name if shown",
+  "occupation": "occupation if shown",
+  "maritalStatus": "marital status if shown",
+  "mrz": ["MRZ_LINE_1", "MRZ_LINE_2", "MRZ_LINE_3"],
+  "additionalFields": [{"label": "Other Field Label", "value": "Other Field Value"}]
+}
 
-DOCUMENT DETAILS:
-- documentType (PASSPORT, ID CARD, DRIVING LICENSE, etc.)
-- documentNumber (passport number, ID number, license number)
-- issueDate (date document was issued)
-- expiryDate (expiration date)
-- placeOfIssue (issuing authority/location)
-- issuingAuthority (who issued the document)
-- issuingCountry (country that issued document)
-
-ADDITIONAL FIELDS:
-- address (if shown on document)
-- height (if shown)
-- eyeColor (if shown)
-- signature (text near signature if any)
-- licenseClass (for driving licenses)
-- restrictions (for driving licenses)
-- bloodType (if shown)
-- emergencyContact (if shown)
-- fatherName (if shown)
-- motherName (if shown)
-- spouseName (if shown)
-- occupation (if shown)
-- maritalStatus (if shown)
-
-MACHINE READABLE ZONE:
-- mrz (array of MRZ lines if visible at bottom of document)
-
-ADDITIONAL TEXT:
-- additionalFields (array of any other text fields found with format: [{label: "Field Name", value: "Field Value"}])
-
-Return ONLY a valid JSON object. Extract the EXACT text as it appears on the document.`
+The "allDetectedText" array is MANDATORY - it must contain EVERY text element you can see.`
           },
           {
             role: "user",
             content: [
               {
                 type: "text",
-                text: "Extract ALL text fields from this identity document. Be thorough and extract every visible piece of text. Return as a comprehensive JSON object with all fields."
+                text: "Extract EVERY piece of text visible on this document. Read all labels, values, codes, dates, and numbers. Be extremely thorough - I need to see all text to choose which fields to edit."
               },
               {
                 type: "image_url",
