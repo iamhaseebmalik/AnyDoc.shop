@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { 
   Upload, 
@@ -14,12 +14,21 @@ import {
   RotateCcw,
   ZoomIn,
   ZoomOut,
-  Check
+  Check,
+  Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { useDocumentOCR, ExtractedDocumentData } from "@/hooks/useDocumentOCR";
 
 type EditorStep = "upload" | "detect" | "photo" | "text" | "compliance" | "export";
+
+interface TextField {
+  id: string;
+  label: string;
+  value: string;
+  editable: boolean;
+}
 
 const Editor = () => {
   const [currentStep, setCurrentStep] = useState<EditorStep>("upload");
@@ -34,6 +43,9 @@ const Editor = () => {
     backgroundUniformity: true,
     imageQuality: true
   });
+  const [textFields, setTextFields] = useState<TextField[]>([]);
+
+  const { extractTextFromDocument, isExtracting, error: ocrError } = useDocumentOCR();
 
   const steps = [
     { id: "upload", label: "Upload", icon: Upload },
@@ -63,7 +75,59 @@ const Editor = () => {
     }
   };
 
-  const handleFile = (file: File) => {
+  const mapExtractedDataToFields = (data: ExtractedDocumentData): TextField[] => {
+    const fields: TextField[] = [];
+    
+    if (data.fullName) {
+      fields.push({ id: "name", label: "Full Name", value: data.fullName, editable: true });
+    }
+    if (data.nationality) {
+      fields.push({ id: "nationality", label: "Nationality", value: data.nationality, editable: true });
+    }
+    if (data.dateOfBirth) {
+      fields.push({ id: "dob", label: "Date of Birth", value: data.dateOfBirth, editable: true });
+    }
+    if (data.gender) {
+      fields.push({ id: "gender", label: "Gender", value: data.gender, editable: true });
+    }
+    if (data.documentNumber) {
+      fields.push({ id: "passport_no", label: "Document No.", value: data.documentNumber, editable: true });
+    }
+    if (data.expiryDate) {
+      fields.push({ id: "expiry", label: "Expiry Date", value: data.expiryDate, editable: true });
+    }
+    if (data.issueDate) {
+      fields.push({ id: "issue", label: "Issue Date", value: data.issueDate, editable: true });
+    }
+    if (data.placeOfBirth) {
+      fields.push({ id: "pob", label: "Place of Birth", value: data.placeOfBirth, editable: true });
+    }
+    if (data.placeOfIssue) {
+      fields.push({ id: "poi", label: "Place of Issue", value: data.placeOfIssue, editable: true });
+    }
+    if (data.surname) {
+      fields.push({ id: "surname", label: "Surname", value: data.surname, editable: true });
+    }
+    if (data.givenNames) {
+      fields.push({ id: "given_names", label: "Given Names", value: data.givenNames, editable: true });
+    }
+
+    // If no fields extracted, provide placeholder
+    if (fields.length === 0) {
+      fields.push(
+        { id: "name", label: "Full Name", value: "", editable: true },
+        { id: "nationality", label: "Nationality", value: "", editable: true },
+        { id: "dob", label: "Date of Birth", value: "", editable: true },
+        { id: "gender", label: "Gender", value: "", editable: true },
+        { id: "passport_no", label: "Document No.", value: "", editable: true },
+        { id: "expiry", label: "Expiry Date", value: "", editable: true }
+      );
+    }
+
+    return fields;
+  };
+
+  const handleFile = async (file: File) => {
     const validTypes = ["image/jpeg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
       toast({
@@ -86,23 +150,60 @@ const Editor = () => {
     setUploadedFile(file);
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
+    setCurrentStep("detect");
     
-    // Simulate AI detection
-    setTimeout(() => {
-      setCurrentStep("detect");
-      toast({
-        title: "Document uploaded",
-        description: "AI is analyzing your document..."
-      });
+    toast({
+      title: "Document uploaded",
+      description: "AI is analyzing your document..."
+    });
+
+    // Only process images for OCR (PDFs would need different handling)
+    if (file.type !== "application/pdf") {
+      const extractedData = await extractTextFromDocument(file);
       
-      setTimeout(() => {
-        setCurrentStep("photo");
+      if (extractedData) {
+        const fields = mapExtractedDataToFields(extractedData);
+        setTextFields(fields);
+        
         toast({
           title: "Detection complete",
-          description: "Face and text fields detected successfully."
+          description: `Extracted ${fields.length} text fields from document.`
         });
-      }, 2000);
-    }, 1000);
+        setCurrentStep("photo");
+      } else {
+        toast({
+          title: "Detection complete",
+          description: "Document detected. Manual text entry may be required.",
+          variant: "default"
+        });
+        setTextFields([
+          { id: "name", label: "Full Name", value: "", editable: true },
+          { id: "nationality", label: "Nationality", value: "", editable: true },
+          { id: "dob", label: "Date of Birth", value: "", editable: true },
+          { id: "gender", label: "Gender", value: "", editable: true },
+          { id: "passport_no", label: "Document No.", value: "", editable: true },
+          { id: "expiry", label: "Expiry Date", value: "", editable: true }
+        ]);
+        setCurrentStep("photo");
+      }
+    } else {
+      // For PDFs, provide placeholder fields
+      setTimeout(() => {
+        setTextFields([
+          { id: "name", label: "Full Name", value: "", editable: true },
+          { id: "nationality", label: "Nationality", value: "", editable: true },
+          { id: "dob", label: "Date of Birth", value: "", editable: true },
+          { id: "gender", label: "Gender", value: "", editable: true },
+          { id: "passport_no", label: "Document No.", value: "", editable: true },
+          { id: "expiry", label: "Expiry Date", value: "", editable: true }
+        ]);
+        toast({
+          title: "PDF detected",
+          description: "Please enter document details manually."
+        });
+        setCurrentStep("photo");
+      }, 1500);
+    }
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,14 +218,6 @@ const Editor = () => {
     { id: "gray", label: "Gray", color: "#E5E5E5" }
   ];
 
-  const textFields = [
-    { id: "name", label: "Full Name", value: "JOHN DOE", editable: true },
-    { id: "nationality", label: "Nationality", value: "UNITED STATES", editable: true },
-    { id: "dob", label: "Date of Birth", value: "15 JAN 1990", editable: true },
-    { id: "gender", label: "Gender", value: "M", editable: true },
-    { id: "passport_no", label: "Passport No.", value: "123456789", editable: true },
-    { id: "expiry", label: "Expiry Date", value: "15 JAN 2035", editable: true }
-  ];
 
   const renderStepContent = () => {
     switch (currentStep) {
@@ -177,20 +270,22 @@ const Editor = () => {
         return (
           <div className="flex-1 flex items-center justify-center p-8">
             <div className="text-center">
-              <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-6 animate-pulse">
-                <Camera className="w-10 h-10 text-accent" />
+              <div className="w-20 h-20 rounded-full bg-accent/20 flex items-center justify-center mx-auto mb-6">
+                <Loader2 className="w-10 h-10 text-accent animate-spin" />
               </div>
               <h3 className="text-xl font-semibold text-foreground mb-2">
-                Analyzing Document...
+                {isExtracting ? "Extracting Text with AI..." : "Analyzing Document..."}
               </h3>
               <p className="text-muted-foreground">
-                Our AI is detecting face, text fields, and document type
+                {isExtracting 
+                  ? "Our AI is reading and extracting text from your document" 
+                  : "Our AI is detecting face, text fields, and document type"}
               </p>
-              <div className="mt-6 flex items-center justify-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-accent animate-bounce" style={{ animationDelay: "0ms" }} />
-                <div className="w-2 h-2 rounded-full bg-accent animate-bounce" style={{ animationDelay: "150ms" }} />
-                <div className="w-2 h-2 rounded-full bg-accent animate-bounce" style={{ animationDelay: "300ms" }} />
-              </div>
+              {ocrError && (
+                <div className="mt-4 p-3 bg-destructive/10 rounded-lg">
+                  <p className="text-sm text-destructive">{ocrError}</p>
+                </div>
+              )}
             </div>
           </div>
         );
@@ -332,18 +427,28 @@ const Editor = () => {
             <div className="bg-card rounded-xl border border-border p-6">
               <h3 className="font-semibold text-foreground mb-4">Edit Text Fields</h3>
               <div className="space-y-4 max-h-[400px] overflow-y-auto">
-                {textFields.map((field) => (
+                {textFields.length > 0 ? textFields.map((field) => (
                   <div key={field.id}>
                     <label className="text-sm font-medium text-muted-foreground mb-1 block">
                       {field.label}
                     </label>
                     <input
                       type="text"
-                      defaultValue={field.value}
+                      value={field.value}
+                      onChange={(e) => {
+                        setTextFields(prev => 
+                          prev.map(f => f.id === field.id ? { ...f, value: e.target.value } : f)
+                        );
+                      }}
                       className="w-full h-10 px-3 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
                     />
                   </div>
-                ))}
+                )) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <AlertCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p>No text fields detected. You can add them manually.</p>
+                  </div>
+                )}
               </div>
               
               <div className="flex gap-3 mt-6">
