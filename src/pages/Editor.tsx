@@ -58,6 +58,8 @@ const Editor = () => {
   const [editedDocumentUrl, setEditedDocumentUrl] = useState<string | null>(null);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<IDTemplate | null>(null);
+  const [templatePhotoUrl, setTemplatePhotoUrl] = useState<string | null>(null);
+  const [templatePhotoFile, setTemplatePhotoFile] = useState<File | null>(null);
 
   const { extractTextFromDocument, isExtracting, error: ocrError } = useDocumentOCR();
   const { uploadDocument, deleteDocument, isUploading, uploadProgress } = useDocumentStorage();
@@ -304,6 +306,10 @@ const Editor = () => {
     if (uploadedDocument) {
       await deleteDocument(uploadedDocument.storagePath, uploadedDocument.id);
     }
+    // Clean up template photo URL
+    if (templatePhotoUrl) {
+      URL.revokeObjectURL(templatePhotoUrl);
+    }
     setCurrentStep("upload");
     setUploadedFile(null);
     setPreviewUrl(null);
@@ -312,6 +318,8 @@ const Editor = () => {
     setEditedDocumentUrl(null);
     setShowTemplateSelector(false);
     setSelectedTemplate(null);
+    setTemplatePhotoUrl(null);
+    setTemplatePhotoFile(null);
   };
 
   const handleSelectTemplate = (template: IDTemplate) => {
@@ -328,16 +336,62 @@ const Editor = () => {
     }));
     
     setTextFields(fields);
-    setPreviewUrl(null); // No image for template
+    setPreviewUrl(null);
     setUploadedFile(null);
+    setTemplatePhotoUrl(null);
+    setTemplatePhotoFile(null);
     
     toast({
       title: "Template Selected",
-      description: `${template.country} ${template.documentTypeLabel} template loaded with ${fields.length} fields.`
+      description: `${template.country} ${template.documentTypeLabel} - Now add your photo.`
     });
     
-    // Skip to text editing step directly (no photo for templates)
-    setCurrentStep("text");
+    // Go to photo step for template photo upload
+    setCurrentStep("photo");
+  };
+
+  const handleTemplatePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // Validate file type
+      const validTypes = ["image/jpeg", "image/png"];
+      if (!validTypes.includes(file.type)) {
+        toast({
+          title: "Invalid file type",
+          description: "Please upload a JPG or PNG image.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Validate file size (5MB max for photos)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Maximum photo size is 5MB.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setTemplatePhotoFile(file);
+      const url = URL.createObjectURL(file);
+      setTemplatePhotoUrl(url);
+      
+      toast({
+        title: "Photo uploaded",
+        description: "Your photo has been added to the template."
+      });
+    }
+  };
+
+  const handleRemoveTemplatePhoto = () => {
+    if (templatePhotoUrl) {
+      URL.revokeObjectURL(templatePhotoUrl);
+    }
+    setTemplatePhotoUrl(null);
+    setTemplatePhotoFile(null);
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -492,6 +546,192 @@ const Editor = () => {
         );
 
       case "photo":
+        // Template photo upload mode
+        if (selectedTemplate) {
+          return (
+            <div className="flex-1 grid lg:grid-cols-2 gap-6 p-6">
+              {/* Template Preview with Photo */}
+              <div className="bg-card rounded-xl border border-border p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="font-semibold text-foreground">Template Preview</h3>
+                    <p className="text-xs text-muted-foreground">
+                      {selectedTemplate.flag} {selectedTemplate.country} • {selectedTemplate.documentTypeLabel}
+                    </p>
+                  </div>
+                </div>
+                <div 
+                  className="aspect-[3/2] rounded-lg flex items-center justify-center relative overflow-hidden"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${selectedTemplate.colors.primary}, ${selectedTemplate.colors.secondary})` 
+                  }}
+                >
+                  <div className="w-[90%] h-[85%] bg-white/95 rounded-lg shadow-lg flex flex-col p-4 relative">
+                    {/* Document Header */}
+                    <div 
+                      className="text-xs font-bold mb-3 tracking-wider"
+                      style={{ color: selectedTemplate.colors.primary }}
+                    >
+                      {selectedTemplate.documentTypeLabel.toUpperCase()} • {selectedTemplate.countryCode}
+                    </div>
+                    
+                    <div className="flex gap-4 flex-1">
+                      {/* Photo Area */}
+                      <div className="w-1/3 aspect-[3/4] bg-secondary rounded-md flex items-center justify-center overflow-hidden border-2 border-dashed border-muted-foreground/30">
+                        {templatePhotoUrl ? (
+                          <img 
+                            src={templatePhotoUrl} 
+                            alt="Your photo" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-center p-2">
+                            <Camera className="w-8 h-8 text-muted-foreground/50 mx-auto mb-1" />
+                            <span className="text-[10px] text-muted-foreground">Your Photo</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Fields Preview */}
+                      <div className="flex-1 flex flex-col gap-1.5 overflow-hidden">
+                        {textFields.slice(0, 6).map((field) => (
+                          <div key={field.id} className="flex flex-col">
+                            <span className="text-[8px] text-muted-foreground uppercase tracking-wide">
+                              {field.label.split('/')[0].trim()}
+                            </span>
+                            <span className="text-[10px] font-medium text-foreground truncate">
+                              {field.value || field.originalValue}
+                            </span>
+                          </div>
+                        ))}
+                        {textFields.length > 6 && (
+                          <span className="text-[8px] text-muted-foreground">
+                            +{textFields.length - 6} more fields...
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Photo Upload Controls */}
+              <div className="bg-card rounded-xl border border-border p-6 space-y-6">
+                <div>
+                  <h3 className="font-semibold text-foreground mb-2">Add Your Photo</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Upload a passport-style photo for your {selectedTemplate.documentTypeLabel.toLowerCase()}
+                  </p>
+                  
+                  {/* Photo Upload Area */}
+                  <div className="mb-6">
+                    {templatePhotoUrl ? (
+                      <div className="space-y-4">
+                        <div className="relative w-40 h-48 mx-auto rounded-lg overflow-hidden border-2 border-accent">
+                          <img 
+                            src={templatePhotoUrl} 
+                            alt="Your photo" 
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            onClick={handleRemoveTemplatePhoto}
+                            className="absolute top-2 right-2 w-6 h-6 bg-destructive rounded-full flex items-center justify-center hover:bg-destructive/80 transition-colors"
+                          >
+                            <RotateCcw className="w-3 h-3 text-destructive-foreground" />
+                          </button>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-sm text-accent font-medium flex items-center justify-center gap-1">
+                            <Check className="w-4 h-4" />
+                            Photo uploaded successfully
+                          </p>
+                          <input
+                            type="file"
+                            id="template-photo-replace"
+                            className="hidden"
+                            accept=".jpg,.jpeg,.png"
+                            onChange={handleTemplatePhotoUpload}
+                          />
+                          <label htmlFor="template-photo-replace">
+                            <Button variant="ghost" size="sm" className="mt-2 cursor-pointer" asChild>
+                              <span>Replace Photo</span>
+                            </Button>
+                          </label>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:border-primary/50 transition-colors">
+                        <div className="w-16 h-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                          <Camera className="w-8 h-8 text-accent" />
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Upload a clear, front-facing photo
+                        </p>
+                        <input
+                          type="file"
+                          id="template-photo-upload"
+                          className="hidden"
+                          accept=".jpg,.jpeg,.png"
+                          onChange={handleTemplatePhotoUpload}
+                        />
+                        <label htmlFor="template-photo-upload">
+                          <Button variant="accent" className="cursor-pointer" asChild>
+                            <span>
+                              <Upload className="w-4 h-4" />
+                              Choose Photo
+                            </span>
+                          </Button>
+                        </label>
+                        <p className="text-xs text-muted-foreground mt-3">
+                          JPG or PNG • Max 5MB
+                        </p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Photo Requirements */}
+                  <div className="p-4 bg-secondary/50 rounded-lg">
+                    <h4 className="text-sm font-medium text-foreground mb-2">Photo Requirements</h4>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3 h-3 text-accent" />
+                        Clear, front-facing photo
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3 h-3 text-accent" />
+                        Plain white or light background
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3 h-3 text-accent" />
+                        No glasses or head coverings (unless religious)
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <Check className="w-3 h-3 text-accent" />
+                        Neutral expression, mouth closed
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Button variant="outline" onClick={handleResetEditor}>
+                    Back
+                  </Button>
+                  <Button 
+                    variant="accent" 
+                    className="flex-1" 
+                    onClick={() => setCurrentStep("text")}
+                  >
+                    {templatePhotoUrl ? "Continue to Text Editing" : "Skip Photo for Now"}
+                    <ArrowRight className="w-4 h-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // Original document photo editing mode
         return (
           <div className="flex-1 grid lg:grid-cols-2 gap-6 p-6">
             {/* Preview */}
@@ -534,7 +774,9 @@ const Editor = () => {
                 )}
                 
                 {/* Face detection overlay */}
-                <div className="absolute top-1/4 left-1/6 w-24 h-28 border-2 border-accent rounded-lg animate-pulse" />
+                {previewUrl && (
+                  <div className="absolute top-1/4 left-1/6 w-24 h-28 border-2 border-accent rounded-lg animate-pulse" />
+                )}
               </div>
             </div>
 
