@@ -22,6 +22,7 @@ import { toast } from "@/hooks/use-toast";
 import { useDocumentOCR, ExtractedDocumentData } from "@/hooks/useDocumentOCR";
 import { useDocumentStorage, UploadedDocument } from "@/hooks/useDocumentStorage";
 import { useDocumentEditor } from "@/hooks/useDocumentEditor";
+import { RefreshCw, Eye, ArrowRight } from "lucide-react";
 
 type EditorStep = "upload" | "detect" | "photo" | "text" | "compliance" | "export";
 
@@ -52,7 +53,8 @@ const Editor = () => {
 
   const { extractTextFromDocument, isExtracting, error: ocrError } = useDocumentOCR();
   const { uploadDocument, deleteDocument, isUploading, uploadProgress } = useDocumentStorage();
-  const { applyEdits, isEditing, error: editError } = useDocumentEditor();
+  const { applyEdits, retryEdits, isEditing, error: editError, lastEditResult, currentAttempt } = useDocumentEditor();
+  const [showComparison, setShowComparison] = useState(false);
 
   const steps = [
     { id: "upload", label: "Upload", icon: Upload },
@@ -658,6 +660,7 @@ const Editor = () => {
 
       case "export":
         const hasEdits = textFields.some(f => f.value !== f.originalValue);
+        const changedFields = textFields.filter(f => f.value !== f.originalValue);
         
         const handleApplyEdits = async () => {
           if (!uploadedFile) {
@@ -689,14 +692,51 @@ const Editor = () => {
           
           if (resultUrl) {
             setEditedDocumentUrl(resultUrl);
+            setShowComparison(true);
             toast({
               title: "Edits applied",
-              description: "Your document has been updated successfully."
+              description: "Review your edited document below."
             });
           } else {
             toast({
               title: "Edit failed",
-              description: editError || "Failed to apply edits. You can still download the original.",
+              description: editError || "Failed to apply edits. You can try again or download the original.",
+              variant: "destructive"
+            });
+          }
+        };
+
+        const handleRetryEdits = async () => {
+          if (!uploadedFile) return;
+
+          toast({
+            title: "Retrying edits",
+            description: `Attempt ${currentAttempt + 1}: AI is re-processing your document...`
+          });
+
+          const originalFields = textFields.map(f => ({ 
+            id: f.id, 
+            label: f.label, 
+            value: f.originalValue 
+          }));
+          const editedFields = textFields.map(f => ({ 
+            id: f.id, 
+            label: f.label, 
+            value: f.value 
+          }));
+
+          const resultUrl = await retryEdits(uploadedFile, originalFields, editedFields);
+          
+          if (resultUrl) {
+            setEditedDocumentUrl(resultUrl);
+            toast({
+              title: "Retry complete",
+              description: "Check the updated result."
+            });
+          } else {
+            toast({
+              title: "Retry failed",
+              description: editError || "Failed to apply edits. You can try again.",
               variant: "destructive"
             });
           }
@@ -752,86 +792,187 @@ const Editor = () => {
         };
 
         return (
-          <div className="flex-1 flex items-center justify-center p-6">
-            <div className="w-full max-w-lg bg-card rounded-xl border border-border p-8 text-center">
-              <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center mx-auto mb-4">
-                {isEditing ? (
-                  <Loader2 className="w-8 h-8 text-accent-foreground animate-spin" />
-                ) : editedDocumentUrl ? (
-                  <Check className="w-8 h-8 text-accent-foreground" />
-                ) : (
-                  <Download className="w-8 h-8 text-accent-foreground" />
-                )}
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
-                {isEditing 
-                  ? "Applying Edits..." 
-                  : editedDocumentUrl 
-                    ? "Document Ready!" 
-                    : "Export Your Document"}
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                {isEditing 
-                  ? "AI is updating the document with your text changes" 
-                  : editedDocumentUrl 
-                    ? "Your edited document is ready for download" 
-                    : hasEdits 
-                      ? "Apply your text edits before downloading" 
-                      : "Download your document in your preferred format"}
-              </p>
+          <div className="flex-1 flex flex-col items-center justify-center p-6 overflow-auto">
+            <div className="w-full max-w-4xl">
+              {/* Comparison View */}
+              {showComparison && editedDocumentUrl && previewUrl && (
+                <div className="bg-card rounded-xl border border-border p-6 mb-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-foreground flex items-center gap-2">
+                      <Eye className="w-5 h-5" />
+                      Compare: Original vs Edited
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowComparison(false)}
+                    >
+                      Hide Comparison
+                    </Button>
+                  </div>
+                  
+                  <div className="grid md:grid-cols-2 gap-4 mb-4">
+                    {/* Original */}
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-muted-foreground text-center">Original</div>
+                      <div className="aspect-[3/2] bg-secondary rounded-lg overflow-hidden">
+                        <img 
+                          src={previewUrl} 
+                          alt="Original document" 
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    </div>
+                    
+                    {/* Edited */}
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-accent text-center flex items-center justify-center gap-2">
+                        <Sparkles className="w-4 h-4" />
+                        AI Edited
+                      </div>
+                      <div className="aspect-[3/2] bg-secondary rounded-lg overflow-hidden border-2 border-accent">
+                        <img 
+                          src={editedDocumentUrl} 
+                          alt="Edited document" 
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    </div>
+                  </div>
 
-              {/* Show Apply Edits button if there are changes and not yet applied */}
-              {hasEdits && !editedDocumentUrl && !isEditing && (
-                <Button 
-                  variant="accent" 
-                  size="lg" 
-                  className="w-full mb-6"
-                  onClick={handleApplyEdits}
-                >
-                  <Sparkles className="w-5 h-5 mr-2" />
-                  Apply AI Edits to Document
-                </Button>
-              )}
+                  {/* Changes Applied */}
+                  <div className="bg-accent/10 rounded-lg p-4">
+                    <div className="text-sm font-medium mb-2">Changes Applied ({changedFields.length})</div>
+                    <div className="space-y-1">
+                      {changedFields.map((field) => (
+                        <div key={field.id} className="flex items-center gap-2 text-sm">
+                          <span className="text-muted-foreground">{field.label}:</span>
+                          <span className="line-through text-destructive/60">{field.originalValue}</span>
+                          <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-accent font-medium">{field.value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
-              {/* Show loading state */}
-              {isEditing && (
-                <div className="mb-6 p-4 bg-accent/10 rounded-lg">
-                  <div className="flex items-center justify-center gap-2 text-accent">
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    <span>Processing with AI...</span>
+                  {/* Retry Button */}
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                    <div className="text-xs text-muted-foreground">
+                      {lastEditResult?.attempt && `Attempt ${lastEditResult.attempt}`}
+                      {lastEditResult?.message && ` • ${lastEditResult.message}`}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleRetryEdits}
+                      disabled={isEditing}
+                    >
+                      <RefreshCw className={`w-4 h-4 mr-2 ${isEditing ? 'animate-spin' : ''}`} />
+                      {isEditing ? 'Retrying...' : 'Not Satisfied? Retry'}
+                    </Button>
                   </div>
                 </div>
               )}
 
-              {/* Download buttons */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
-                {[
-                  { format: "PNG", desc: "High Resolution" },
-                  { format: "JPG", desc: "Compressed" },
-                  { format: "PDF", desc: "Print Ready" }
-                ].map((option) => (
-                  <Button 
-                    key={option.format}
-                    variant="outline" 
-                    className="flex-col h-auto py-4"
-                    onClick={() => handleDownload(option.format)}
-                    disabled={isEditing}
-                  >
-                    <span className="font-bold">{option.format}</span>
-                    <span className="text-xs text-muted-foreground">{option.desc}</span>
-                  </Button>
-                ))}
-              </div>
-
-              {!editedDocumentUrl && hasEdits && (
-                <p className="text-xs text-muted-foreground mb-4">
-                  Download without edits, or click "Apply AI Edits" first
+              {/* Main Export Card */}
+              <div className="bg-card rounded-xl border border-border p-8 text-center max-w-lg mx-auto">
+                <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center mx-auto mb-4">
+                  {isEditing ? (
+                    <Loader2 className="w-8 h-8 text-accent-foreground animate-spin" />
+                  ) : editedDocumentUrl ? (
+                    <Check className="w-8 h-8 text-accent-foreground" />
+                  ) : (
+                    <Download className="w-8 h-8 text-accent-foreground" />
+                  )}
+                </div>
+                <h3 className="text-xl font-semibold text-foreground mb-2">
+                  {isEditing 
+                    ? `Applying Edits (Attempt ${currentAttempt || 1})...` 
+                    : editedDocumentUrl 
+                      ? "Document Ready!" 
+                      : "Export Your Document"}
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  {isEditing 
+                    ? "AI is carefully updating your document" 
+                    : editedDocumentUrl 
+                      ? "Your edited document is ready for download" 
+                      : hasEdits 
+                        ? `You have ${changedFields.length} text change(s) to apply` 
+                        : "Download your document in your preferred format"}
                 </p>
-              )}
 
-              <Button variant="ghost" onClick={handleResetEditor} disabled={isEditing}>
-                Edit Another Document
-              </Button>
+                {/* Show Apply Edits button if there are changes and not yet applied */}
+                {hasEdits && !editedDocumentUrl && !isEditing && (
+                  <Button 
+                    variant="accent" 
+                    size="lg" 
+                    className="w-full mb-6"
+                    onClick={handleApplyEdits}
+                  >
+                    <Sparkles className="w-5 h-5 mr-2" />
+                    Apply AI Edits ({changedFields.length} changes)
+                  </Button>
+                )}
+
+                {/* Show loading state */}
+                {isEditing && (
+                  <div className="mb-6 p-4 bg-accent/10 rounded-lg">
+                    <div className="flex items-center justify-center gap-2 text-accent">
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Processing with AI (google/gemini-3-pro-image-preview)...</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      This may take a few seconds for best quality
+                    </p>
+                  </div>
+                )}
+
+                {/* Error state with retry */}
+                {editError && !isEditing && (
+                  <div className="mb-6 p-4 bg-destructive/10 rounded-lg">
+                    <p className="text-sm text-destructive mb-2">{editError}</p>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleRetryEdits}
+                    >
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                      Try Again
+                    </Button>
+                  </div>
+                )}
+
+                {/* Download buttons */}
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  {[
+                    { format: "PNG", desc: "High Resolution" },
+                    { format: "JPG", desc: "Compressed" },
+                    { format: "PDF", desc: "Print Ready" }
+                  ].map((option) => (
+                    <Button 
+                      key={option.format}
+                      variant="outline" 
+                      className="flex-col h-auto py-4"
+                      onClick={() => handleDownload(option.format)}
+                      disabled={isEditing}
+                    >
+                      <span className="font-bold">{option.format}</span>
+                      <span className="text-xs text-muted-foreground">{option.desc}</span>
+                    </Button>
+                  ))}
+                </div>
+
+                {!editedDocumentUrl && hasEdits && (
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Download without edits, or click "Apply AI Edits" first
+                  </p>
+                )}
+
+                <Button variant="ghost" onClick={handleResetEditor} disabled={isEditing}>
+                  Edit Another Document
+                </Button>
+              </div>
             </div>
           </div>
         );
