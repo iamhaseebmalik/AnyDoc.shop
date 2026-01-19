@@ -7,18 +7,37 @@ interface TextEdit {
   newValue: string;
 }
 
+interface AppliedEdit {
+  label: string;
+  from: string;
+  to: string;
+}
+
+interface EditResult {
+  success: boolean;
+  editedImageUrl: string | null;
+  editsApplied: AppliedEdit[];
+  attempt: number;
+  canRetry: boolean;
+  message: string;
+}
+
 export const useDocumentEditor = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastEditResult, setLastEditResult] = useState<EditResult | null>(null);
+  const [currentAttempt, setCurrentAttempt] = useState(0);
 
   const applyEdits = async (
     file: File,
     originalFields: { id: string; label: string; value: string }[],
-    editedFields: { id: string; label: string; value: string }[]
+    editedFields: { id: string; label: string; value: string }[],
+    attempt: number = 1
   ): Promise<string | null> => {
     setIsEditing(true);
     setError(null);
+    setCurrentAttempt(attempt);
 
     try {
       // Convert file to base64
@@ -35,16 +54,25 @@ export const useDocumentEditor = () => {
         // No edits, return original file as data URL
         const originalUrl = `data:${file.type};base64,${base64}`;
         setEditedImageUrl(originalUrl);
+        setLastEditResult({
+          success: true,
+          editedImageUrl: originalUrl,
+          editsApplied: [],
+          attempt,
+          canRetry: false,
+          message: "No changes to apply"
+        });
         return originalUrl;
       }
 
-      console.log("Calling edit-document with", textEdits.length, "edits");
+      console.log(`Attempt ${attempt}: Calling edit-document with ${textEdits.length} edits`);
       
       const { data, error: fnError } = await supabase.functions.invoke("edit-document", {
         body: {
           imageBase64: base64,
           mimeType: file.type,
           textEdits,
+          attempt,
         },
       });
 
@@ -56,13 +84,31 @@ export const useDocumentEditor = () => {
       }
 
       if (!data.success) {
-        console.error("Edit failed:", data.error);
-        throw new Error(data.error || "Failed to edit document");
+        console.error("Edit failed:", data.error || data.message);
+        setLastEditResult({
+          success: false,
+          editedImageUrl: null,
+          editsApplied: [],
+          attempt,
+          canRetry: data.canRetry !== false,
+          message: data.error || data.message || "Failed to edit document"
+        });
+        throw new Error(data.error || data.message || "Failed to edit document");
       }
 
       const resultUrl = data.editedImageUrl || `data:image/png;base64,${data.editedImageBase64}`;
       console.log("Edit successful, result URL length:", resultUrl?.length);
+      
       setEditedImageUrl(resultUrl);
+      setLastEditResult({
+        success: true,
+        editedImageUrl: resultUrl,
+        editsApplied: data.editsApplied || [],
+        attempt: data.attempt || attempt,
+        canRetry: true,
+        message: data.message || "Edits applied successfully"
+      });
+      
       return resultUrl;
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to edit document";
@@ -71,6 +117,15 @@ export const useDocumentEditor = () => {
     } finally {
       setIsEditing(false);
     }
+  };
+
+  const retryEdits = async (
+    file: File,
+    originalFields: { id: string; label: string; value: string }[],
+    editedFields: { id: string; label: string; value: string }[]
+  ): Promise<string | null> => {
+    const nextAttempt = currentAttempt + 1;
+    return applyEdits(file, originalFields, editedFields, nextAttempt);
   };
 
   const fileToBase64 = (file: File): Promise<string> => {
@@ -89,13 +144,18 @@ export const useDocumentEditor = () => {
   const resetEditedImage = () => {
     setEditedImageUrl(null);
     setError(null);
+    setLastEditResult(null);
+    setCurrentAttempt(0);
   };
 
   return {
     applyEdits,
+    retryEdits,
     isEditing,
     editedImageUrl,
     resetEditedImage,
     error,
+    lastEditResult,
+    currentAttempt,
   };
 };
