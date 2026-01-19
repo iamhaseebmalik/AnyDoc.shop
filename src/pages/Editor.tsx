@@ -15,14 +15,17 @@ import {
   Check,
   Loader2,
   Clock,
-  Sparkles
+  Sparkles,
+  RefreshCw, 
+  Eye, 
+  ArrowRight
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
 import { useDocumentOCR, ExtractedDocumentData } from "@/hooks/useDocumentOCR";
 import { useDocumentStorage, UploadedDocument } from "@/hooks/useDocumentStorage";
 import { useDocumentEditor } from "@/hooks/useDocumentEditor";
-import { RefreshCw, Eye, ArrowRight } from "lucide-react";
+import { ZoomableImage } from "@/components/ZoomableImage";
 
 type EditorStep = "upload" | "detect" | "photo" | "text" | "compliance" | "export";
 
@@ -815,11 +818,11 @@ const Editor = () => {
                     {/* Original */}
                     <div className="space-y-2">
                       <div className="text-sm font-medium text-muted-foreground text-center">Original</div>
-                      <div className="aspect-[3/2] bg-secondary rounded-lg overflow-hidden">
-                        <img 
+                      <div className="aspect-[3/2] bg-secondary rounded-lg">
+                        <ZoomableImage 
                           src={previewUrl} 
                           alt="Original document" 
-                          className="w-full h-full object-contain"
+                          className="w-full h-full"
                         />
                       </div>
                     </div>
@@ -830,11 +833,11 @@ const Editor = () => {
                         <Sparkles className="w-4 h-4" />
                         AI Edited
                       </div>
-                      <div className="aspect-[3/2] bg-secondary rounded-lg overflow-hidden border-2 border-accent">
-                        <img 
+                      <div className="aspect-[3/2] bg-secondary rounded-lg border-2 border-accent">
+                        <ZoomableImage 
                           src={editedDocumentUrl} 
                           alt="Edited document" 
-                          className="w-full h-full object-contain"
+                          className="w-full h-full"
                         />
                       </div>
                     </div>
