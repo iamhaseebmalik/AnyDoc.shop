@@ -5,6 +5,8 @@ export interface IDTemplate {
   documentType: "passport" | "national_id" | "driving_license";
   documentTypeLabel: string;
   flag: string;
+  // Template image for the document background
+  templateImage?: string;
   fields: {
     id: string;
     label: string;
@@ -15,11 +17,18 @@ export interface IDTemplate {
     primary: string;
     secondary: string;
     text: string;
+    accent?: string;
+  };
+  // Document dimensions and styling
+  layout: {
+    aspectRatio: string;
+    photoPosition: "left" | "right" | "center";
+    style: "modern" | "classic" | "biometric";
   };
 }
 
 export const idTemplates: IDTemplate[] = [
-  // Passports
+  // ===== PASSPORTS =====
   {
     id: "usa-passport",
     country: "United States",
@@ -28,17 +37,21 @@ export const idTemplates: IDTemplate[] = [
     documentTypeLabel: "Passport",
     flag: "🇺🇸",
     fields: [
+      { id: "type", label: "Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "Code", value: "USA", placeholder: "USA" },
       { id: "surname", label: "Surname", value: "", placeholder: "SMITH" },
       { id: "givenNames", label: "Given Names", value: "", placeholder: "JOHN WILLIAM" },
-      { id: "nationality", label: "Nationality", value: "UNITED STATES", placeholder: "UNITED STATES" },
+      { id: "nationality", label: "Nationality", value: "UNITED STATES OF AMERICA", placeholder: "UNITED STATES OF AMERICA" },
       { id: "dateOfBirth", label: "Date of Birth", value: "", placeholder: "01 JAN 1990" },
       { id: "placeOfBirth", label: "Place of Birth", value: "", placeholder: "NEW YORK, U.S.A." },
       { id: "gender", label: "Sex", value: "", placeholder: "M" },
       { id: "issueDate", label: "Date of Issue", value: "", placeholder: "15 MAR 2020" },
       { id: "expiryDate", label: "Date of Expiration", value: "", placeholder: "14 MAR 2030" },
-      { id: "documentNumber", label: "Passport No.", value: "", placeholder: "123456789" },
+      { id: "documentNumber", label: "Passport No.", value: "", placeholder: "523456789" },
+      { id: "authority", label: "Authority", value: "United States Department of State", placeholder: "United States Department of State" },
     ],
-    colors: { primary: "#0A3161", secondary: "#B31942", text: "#FFFFFF" }
+    colors: { primary: "#0A3161", secondary: "#B31942", text: "#FFFFFF", accent: "#FFD700" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
   },
   {
     id: "uk-passport",
@@ -48,6 +61,8 @@ export const idTemplates: IDTemplate[] = [
     documentTypeLabel: "Passport",
     flag: "🇬🇧",
     fields: [
+      { id: "type", label: "Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "Code", value: "GBR", placeholder: "GBR" },
       { id: "surname", label: "Surname", value: "", placeholder: "JONES" },
       { id: "givenNames", label: "Given names", value: "", placeholder: "ELIZABETH ANNE" },
       { id: "nationality", label: "Nationality", value: "BRITISH CITIZEN", placeholder: "BRITISH CITIZEN" },
@@ -57,28 +72,33 @@ export const idTemplates: IDTemplate[] = [
       { id: "issueDate", label: "Date of issue", value: "", placeholder: "01/06/2020" },
       { id: "expiryDate", label: "Date of expiry", value: "", placeholder: "01/06/2030" },
       { id: "documentNumber", label: "Passport No.", value: "", placeholder: "987654321" },
+      { id: "authority", label: "Authority", value: "HM Passport Office", placeholder: "HM Passport Office" },
     ],
-    colors: { primary: "#4C2882", secondary: "#C8102E", text: "#FFFFFF" }
+    colors: { primary: "#4C2882", secondary: "#C8102E", text: "#FFFFFF", accent: "#FFD700" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
   },
   {
     id: "canada-passport",
     country: "Canada",
     countryCode: "CAN",
     documentType: "passport",
-    documentTypeLabel: "Passport",
+    documentTypeLabel: "Passport / Passeport",
     flag: "🇨🇦",
     fields: [
+      { id: "type", label: "Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "Code", value: "CAN", placeholder: "CAN" },
       { id: "surname", label: "Surname / Nom", value: "", placeholder: "TREMBLAY" },
       { id: "givenNames", label: "Given names / Prénoms", value: "", placeholder: "MARIE CLAIRE" },
       { id: "nationality", label: "Nationality / Nationalité", value: "CANADIAN / CANADIENNE", placeholder: "CANADIAN / CANADIENNE" },
       { id: "dateOfBirth", label: "Date of birth / Date de naissance", value: "", placeholder: "15 JUN 1985" },
-      { id: "placeOfBirth", label: "Place of birth / Lieu de naissance", value: "", placeholder: "MONTREAL, CANADA" },
+      { id: "placeOfBirth", label: "Place of birth / Lieu de naissance", value: "", placeholder: "MONTREAL, QUEBEC" },
       { id: "gender", label: "Sex / Sexe", value: "", placeholder: "F" },
       { id: "issueDate", label: "Date of issue / Date de délivrance", value: "", placeholder: "01 JAN 2021" },
       { id: "expiryDate", label: "Date of expiry / Date d'expiration", value: "", placeholder: "01 JAN 2031" },
       { id: "documentNumber", label: "Passport No. / No de passeport", value: "", placeholder: "AB123456" },
     ],
-    colors: { primary: "#003399", secondary: "#FF0000", text: "#FFFFFF" }
+    colors: { primary: "#003087", secondary: "#FF0000", text: "#FFFFFF", accent: "#FFFFFF" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
   },
   {
     id: "germany-passport",
@@ -88,17 +108,21 @@ export const idTemplates: IDTemplate[] = [
     documentTypeLabel: "Reisepass",
     flag: "🇩🇪",
     fields: [
+      { id: "type", label: "Type / Typ", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "Code", value: "D", placeholder: "D" },
       { id: "surname", label: "Name / Surname", value: "", placeholder: "MÜLLER" },
       { id: "givenNames", label: "Vornamen / Given names", value: "", placeholder: "HANS PETER" },
-      { id: "nationality", label: "Staatsangehörigkeit / Nationality", value: "DEUTSCH", placeholder: "DEUTSCH" },
+      { id: "nationality", label: "Staatsangehörigkeit / Nationality", value: "DEUTSCH / GERMAN", placeholder: "DEUTSCH / GERMAN" },
       { id: "dateOfBirth", label: "Geburtsdatum / Date of birth", value: "", placeholder: "01.01.1988" },
       { id: "placeOfBirth", label: "Geburtsort / Place of birth", value: "", placeholder: "BERLIN" },
       { id: "gender", label: "Geschlecht / Sex", value: "", placeholder: "M" },
       { id: "issueDate", label: "Ausstellungsdatum / Date of issue", value: "", placeholder: "15.06.2020" },
       { id: "expiryDate", label: "Gültig bis / Date of expiry", value: "", placeholder: "14.06.2030" },
-      { id: "documentNumber", label: "Pass-Nr. / Passport No.", value: "", placeholder: "C01234567" },
+      { id: "documentNumber", label: "Pass-Nr. / Passport No.", value: "", placeholder: "C01X00T47" },
+      { id: "authority", label: "Behörde / Authority", value: "", placeholder: "STADT BERLIN" },
     ],
-    colors: { primary: "#000000", secondary: "#DD0000", text: "#FFCC00" }
+    colors: { primary: "#8B0000", secondary: "#000000", text: "#FFD700", accent: "#FFFFFF" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
   },
   {
     id: "france-passport",
@@ -108,9 +132,11 @@ export const idTemplates: IDTemplate[] = [
     documentTypeLabel: "Passeport",
     flag: "🇫🇷",
     fields: [
+      { id: "type", label: "Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "Code", value: "FRA", placeholder: "FRA" },
       { id: "surname", label: "Nom / Surname", value: "", placeholder: "DUPONT" },
       { id: "givenNames", label: "Prénoms / Given names", value: "", placeholder: "JEAN PIERRE" },
-      { id: "nationality", label: "Nationalité / Nationality", value: "FRANÇAISE", placeholder: "FRANÇAISE" },
+      { id: "nationality", label: "Nationalité / Nationality", value: "FRANÇAISE / FRENCH", placeholder: "FRANÇAISE / FRENCH" },
       { id: "dateOfBirth", label: "Date de naissance / Date of birth", value: "", placeholder: "01/01/1992" },
       { id: "placeOfBirth", label: "Lieu de naissance / Place of birth", value: "", placeholder: "PARIS" },
       { id: "gender", label: "Sexe / Sex", value: "", placeholder: "M" },
@@ -118,16 +144,19 @@ export const idTemplates: IDTemplate[] = [
       { id: "expiryDate", label: "Date d'expiration / Date of expiry", value: "", placeholder: "14/03/2031" },
       { id: "documentNumber", label: "N° de passeport / Passport No.", value: "", placeholder: "20AA12345" },
     ],
-    colors: { primary: "#002395", secondary: "#ED2939", text: "#FFFFFF" }
+    colors: { primary: "#002654", secondary: "#CE1126", text: "#FFFFFF", accent: "#FFFFFF" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
   },
   {
     id: "india-passport",
     country: "India",
     countryCode: "IND",
     documentType: "passport",
-    documentTypeLabel: "Passport",
+    documentTypeLabel: "Passport / पासपोर्ट",
     flag: "🇮🇳",
     fields: [
+      { id: "type", label: "Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "Country Code", value: "IND", placeholder: "IND" },
       { id: "surname", label: "Surname", value: "", placeholder: "SHARMA" },
       { id: "givenNames", label: "Given Name(s)", value: "", placeholder: "PRIYA" },
       { id: "nationality", label: "Nationality", value: "INDIAN", placeholder: "INDIAN" },
@@ -135,11 +164,16 @@ export const idTemplates: IDTemplate[] = [
       { id: "placeOfBirth", label: "Place of Birth", value: "", placeholder: "NEW DELHI" },
       { id: "gender", label: "Sex", value: "", placeholder: "F" },
       { id: "fatherName", label: "Father's Name", value: "", placeholder: "RAJESH SHARMA" },
+      { id: "motherName", label: "Mother's Name", value: "", placeholder: "SUNITA SHARMA" },
+      { id: "spouseName", label: "Spouse's Name", value: "", placeholder: "" },
+      { id: "address", label: "Address", value: "", placeholder: "A-123, SECTOR 15, NEW DELHI - 110001" },
       { id: "issueDate", label: "Date of Issue", value: "", placeholder: "20/01/2020" },
       { id: "expiryDate", label: "Date of Expiry", value: "", placeholder: "19/01/2030" },
       { id: "documentNumber", label: "Passport No.", value: "", placeholder: "M1234567" },
+      { id: "fileNumber", label: "File No.", value: "", placeholder: "DL1234567890123" },
     ],
-    colors: { primary: "#000080", secondary: "#FF9933", text: "#FFFFFF" }
+    colors: { primary: "#000080", secondary: "#FF9933", text: "#FFFFFF", accent: "#138808" },
+    layout: { aspectRatio: "3:4", photoPosition: "right", style: "classic" }
   },
   {
     id: "japan-passport",
@@ -149,17 +183,20 @@ export const idTemplates: IDTemplate[] = [
     documentTypeLabel: "旅券 / Passport",
     flag: "🇯🇵",
     fields: [
+      { id: "type", label: "型 / Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "国籍コード / Code", value: "JPN", placeholder: "JPN" },
       { id: "surname", label: "姓 / Surname", value: "", placeholder: "TANAKA" },
       { id: "givenNames", label: "名 / Given names", value: "", placeholder: "YUKI" },
       { id: "nationality", label: "国籍 / Nationality", value: "JAPAN", placeholder: "JAPAN" },
       { id: "dateOfBirth", label: "生年月日 / Date of birth", value: "", placeholder: "1990/01/15" },
       { id: "placeOfBirth", label: "本籍 / Registered Domicile", value: "", placeholder: "TOKYO" },
-      { id: "gender", label: "性別 / Sex", value: "", placeholder: "F" },
+      { id: "gender", label: "性別 / Sex", value: "", placeholder: "女 / F" },
       { id: "issueDate", label: "発行日 / Date of issue", value: "", placeholder: "2021/06/01" },
       { id: "expiryDate", label: "有効期限 / Date of expiry", value: "", placeholder: "2031/06/01" },
       { id: "documentNumber", label: "旅券番号 / Passport No.", value: "", placeholder: "TK1234567" },
     ],
-    colors: { primary: "#BC002D", secondary: "#FFFFFF", text: "#000000" }
+    colors: { primary: "#BC002D", secondary: "#000000", text: "#FFFFFF", accent: "#FFD700" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
   },
   {
     id: "australia-passport",
@@ -169,6 +206,8 @@ export const idTemplates: IDTemplate[] = [
     documentTypeLabel: "Passport",
     flag: "🇦🇺",
     fields: [
+      { id: "type", label: "Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "Code", value: "AUS", placeholder: "AUS" },
       { id: "surname", label: "Family name", value: "", placeholder: "WILLIAMS" },
       { id: "givenNames", label: "Given names", value: "", placeholder: "SARAH JANE" },
       { id: "nationality", label: "Nationality", value: "AUSTRALIAN", placeholder: "AUSTRALIAN" },
@@ -179,7 +218,8 @@ export const idTemplates: IDTemplate[] = [
       { id: "expiryDate", label: "Date of expiry", value: "", placeholder: "01 MAR 2032" },
       { id: "documentNumber", label: "Passport No.", value: "", placeholder: "PA1234567" },
     ],
-    colors: { primary: "#00008B", secondary: "#FFD700", text: "#FFFFFF" }
+    colors: { primary: "#00008B", secondary: "#002F6C", text: "#FFFFFF", accent: "#FFD700" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
   },
   {
     id: "brazil-passport",
@@ -189,11 +229,13 @@ export const idTemplates: IDTemplate[] = [
     documentTypeLabel: "Passaporte",
     flag: "🇧🇷",
     fields: [
+      { id: "type", label: "Tipo / Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "Código / Code", value: "BRA", placeholder: "BRA" },
       { id: "surname", label: "Nome / Surname", value: "", placeholder: "SILVA" },
       { id: "givenNames", label: "Nome / Given names", value: "", placeholder: "CARLOS EDUARDO" },
-      { id: "nationality", label: "Nacionalidade / Nationality", value: "BRASILEIRA", placeholder: "BRASILEIRA" },
+      { id: "nationality", label: "Nacionalidade / Nationality", value: "BRASILEIRA / BRAZILIAN", placeholder: "BRASILEIRA / BRAZILIAN" },
       { id: "dateOfBirth", label: "Data de nascimento / Date of birth", value: "", placeholder: "10/05/1991" },
-      { id: "placeOfBirth", label: "Naturalidade / Place of birth", value: "", placeholder: "SÃO PAULO" },
+      { id: "placeOfBirth", label: "Naturalidade / Place of birth", value: "", placeholder: "SÃO PAULO/SP" },
       { id: "gender", label: "Sexo / Sex", value: "", placeholder: "M" },
       { id: "fatherName", label: "Filiação (Pai) / Father", value: "", placeholder: "JOSÉ SILVA" },
       { id: "motherName", label: "Filiação (Mãe) / Mother", value: "", placeholder: "MARIA SILVA" },
@@ -201,7 +243,8 @@ export const idTemplates: IDTemplate[] = [
       { id: "expiryDate", label: "Data de validade / Date of expiry", value: "", placeholder: "01/02/2030" },
       { id: "documentNumber", label: "Passaporte Nº / Passport No.", value: "", placeholder: "FX123456" },
     ],
-    colors: { primary: "#009C3B", secondary: "#FFDF00", text: "#002776" }
+    colors: { primary: "#009C3B", secondary: "#FFDF00", text: "#002776", accent: "#FFFFFF" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
   },
   {
     id: "uae-passport",
@@ -211,20 +254,164 @@ export const idTemplates: IDTemplate[] = [
     documentTypeLabel: "جواز سفر / Passport",
     flag: "🇦🇪",
     fields: [
+      { id: "type", label: "النوع / Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "رمز الدولة / Code", value: "ARE", placeholder: "ARE" },
       { id: "surname", label: "اسم العائلة / Surname", value: "", placeholder: "AL MAKTOUM" },
-      { id: "givenNames", label: "الاسم / Given names", value: "", placeholder: "AHMED" },
-      { id: "nationality", label: "الجنسية / Nationality", value: "EMIRATI", placeholder: "EMIRATI" },
+      { id: "givenNames", label: "الاسم / Given names", value: "", placeholder: "AHMED MOHAMMED" },
+      { id: "nationality", label: "الجنسية / Nationality", value: "EMIRATI / إماراتي", placeholder: "EMIRATI / إماراتي" },
       { id: "dateOfBirth", label: "تاريخ الميلاد / Date of birth", value: "", placeholder: "01/01/1990" },
-      { id: "placeOfBirth", label: "مكان الميلاد / Place of birth", value: "", placeholder: "DUBAI" },
-      { id: "gender", label: "الجنس / Sex", value: "", placeholder: "M" },
+      { id: "placeOfBirth", label: "مكان الميلاد / Place of birth", value: "", placeholder: "DUBAI / دبي" },
+      { id: "gender", label: "الجنس / Sex", value: "", placeholder: "M / ذكر" },
       { id: "issueDate", label: "تاريخ الإصدار / Date of issue", value: "", placeholder: "15/03/2021" },
       { id: "expiryDate", label: "تاريخ الانتهاء / Date of expiry", value: "", placeholder: "14/03/2026" },
       { id: "documentNumber", label: "رقم الجواز / Passport No.", value: "", placeholder: "A12345678" },
     ],
-    colors: { primary: "#00732F", secondary: "#FF0000", text: "#FFFFFF" }
+    colors: { primary: "#00732F", secondary: "#000000", text: "#FFFFFF", accent: "#FF0000" },
+    layout: { aspectRatio: "3:4", photoPosition: "right", style: "biometric" }
+  },
+  {
+    id: "china-passport",
+    country: "China",
+    countryCode: "CHN",
+    documentType: "passport",
+    documentTypeLabel: "护照 / Passport",
+    flag: "🇨🇳",
+    fields: [
+      { id: "type", label: "类型 / Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "代码 / Code", value: "CHN", placeholder: "CHN" },
+      { id: "surname", label: "姓 / Surname", value: "", placeholder: "WANG" },
+      { id: "givenNames", label: "名 / Given names", value: "", placeholder: "WEI" },
+      { id: "nationality", label: "国籍 / Nationality", value: "CHINESE / 中国", placeholder: "CHINESE / 中国" },
+      { id: "dateOfBirth", label: "出生日期 / Date of birth", value: "", placeholder: "1988/05/20" },
+      { id: "placeOfBirth", label: "出生地 / Place of birth", value: "", placeholder: "BEIJING / 北京" },
+      { id: "gender", label: "性别 / Sex", value: "", placeholder: "男 / M" },
+      { id: "issueDate", label: "签发日期 / Date of issue", value: "", placeholder: "2020/06/15" },
+      { id: "expiryDate", label: "有效期至 / Date of expiry", value: "", placeholder: "2030/06/14" },
+      { id: "documentNumber", label: "护照号码 / Passport No.", value: "", placeholder: "E12345678" },
+      { id: "authority", label: "签发机关 / Authority", value: "", placeholder: "MPS EXIT-ENTRY ADMINISTRATION" },
+    ],
+    colors: { primary: "#DE2910", secondary: "#FFDE00", text: "#FFFFFF", accent: "#FFDE00" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
+  },
+  {
+    id: "russia-passport",
+    country: "Russia",
+    countryCode: "RUS",
+    documentType: "passport",
+    documentTypeLabel: "Паспорт / Passport",
+    flag: "🇷🇺",
+    fields: [
+      { id: "type", label: "Тип / Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "Код / Code", value: "RUS", placeholder: "RUS" },
+      { id: "surname", label: "Фамилия / Surname", value: "", placeholder: "IVANOV" },
+      { id: "givenNames", label: "Имя / Given names", value: "", placeholder: "IVAN PETROVICH" },
+      { id: "nationality", label: "Гражданство / Nationality", value: "RUSSIAN / РОССИЙСКОЕ", placeholder: "RUSSIAN / РОССИЙСКОЕ" },
+      { id: "dateOfBirth", label: "Дата рождения / Date of birth", value: "", placeholder: "15.03.1985" },
+      { id: "placeOfBirth", label: "Место рождения / Place of birth", value: "", placeholder: "MOSCOW / МОСКВА" },
+      { id: "gender", label: "Пол / Sex", value: "", placeholder: "M / М" },
+      { id: "issueDate", label: "Дата выдачи / Date of issue", value: "", placeholder: "01.06.2020" },
+      { id: "expiryDate", label: "Действителен до / Date of expiry", value: "", placeholder: "01.06.2030" },
+      { id: "documentNumber", label: "№ паспорта / Passport No.", value: "", placeholder: "75 1234567" },
+    ],
+    colors: { primary: "#D52B1E", secondary: "#0039A6", text: "#FFFFFF", accent: "#FFFFFF" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
+  },
+  {
+    id: "mexico-passport",
+    country: "Mexico",
+    countryCode: "MEX",
+    documentType: "passport",
+    documentTypeLabel: "Pasaporte",
+    flag: "🇲🇽",
+    fields: [
+      { id: "type", label: "Tipo / Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "Código / Code", value: "MEX", placeholder: "MEX" },
+      { id: "surname", label: "Apellidos / Surname", value: "", placeholder: "GARCÍA HERNÁNDEZ" },
+      { id: "givenNames", label: "Nombre(s) / Given names", value: "", placeholder: "MIGUEL ÁNGEL" },
+      { id: "nationality", label: "Nacionalidad / Nationality", value: "MEXICANA / MEXICAN", placeholder: "MEXICANA / MEXICAN" },
+      { id: "dateOfBirth", label: "Fecha de nacimiento / Date of birth", value: "", placeholder: "20/11/1990" },
+      { id: "placeOfBirth", label: "Lugar de nacimiento / Place of birth", value: "", placeholder: "CIUDAD DE MEXICO" },
+      { id: "gender", label: "Sexo / Sex", value: "", placeholder: "H / M" },
+      { id: "issueDate", label: "Fecha de expedición / Date of issue", value: "", placeholder: "15/03/2021" },
+      { id: "expiryDate", label: "Fecha de caducidad / Date of expiry", value: "", placeholder: "14/03/2031" },
+      { id: "documentNumber", label: "No. de pasaporte / Passport No.", value: "", placeholder: "G12345678" },
+      { id: "curp", label: "CURP", value: "", placeholder: "GAHM901120HDFRGL09" },
+    ],
+    colors: { primary: "#006847", secondary: "#CE1126", text: "#FFFFFF", accent: "#FFFFFF" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
+  },
+  {
+    id: "south-korea-passport",
+    country: "South Korea",
+    countryCode: "KOR",
+    documentType: "passport",
+    documentTypeLabel: "여권 / Passport",
+    flag: "🇰🇷",
+    fields: [
+      { id: "type", label: "종류 / Type", value: "PM", placeholder: "PM" },
+      { id: "countryCode", label: "국가코드 / Code", value: "KOR", placeholder: "KOR" },
+      { id: "surname", label: "성 / Surname", value: "", placeholder: "KIM" },
+      { id: "givenNames", label: "명 / Given names", value: "", placeholder: "MIN JUN" },
+      { id: "koreanName", label: "한글 성명", value: "", placeholder: "김민준" },
+      { id: "nationality", label: "국적 / Nationality", value: "REPUBLIC OF KOREA", placeholder: "REPUBLIC OF KOREA" },
+      { id: "dateOfBirth", label: "생년월일 / Date of birth", value: "", placeholder: "1992.03.15" },
+      { id: "gender", label: "성별 / Sex", value: "", placeholder: "남 / M" },
+      { id: "issueDate", label: "발급일 / Date of issue", value: "", placeholder: "2021.06.01" },
+      { id: "expiryDate", label: "기간만료일 / Date of expiry", value: "", placeholder: "2031.06.01" },
+      { id: "documentNumber", label: "여권번호 / Passport No.", value: "", placeholder: "M12345678" },
+    ],
+    colors: { primary: "#003478", secondary: "#C60C30", text: "#FFFFFF", accent: "#FFFFFF" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
+  },
+  {
+    id: "italy-passport",
+    country: "Italy",
+    countryCode: "ITA",
+    documentType: "passport",
+    documentTypeLabel: "Passaporto",
+    flag: "🇮🇹",
+    fields: [
+      { id: "type", label: "Tipo / Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "Codice / Code", value: "ITA", placeholder: "ITA" },
+      { id: "surname", label: "Cognome / Surname", value: "", placeholder: "ROSSI" },
+      { id: "givenNames", label: "Nome / Given names", value: "", placeholder: "MARCO" },
+      { id: "nationality", label: "Cittadinanza / Nationality", value: "ITALIANA / ITALIAN", placeholder: "ITALIANA / ITALIAN" },
+      { id: "dateOfBirth", label: "Data di nascita / Date of birth", value: "", placeholder: "15/06/1988" },
+      { id: "placeOfBirth", label: "Luogo di nascita / Place of birth", value: "", placeholder: "ROMA" },
+      { id: "gender", label: "Sesso / Sex", value: "", placeholder: "M" },
+      { id: "issueDate", label: "Data di rilascio / Date of issue", value: "", placeholder: "01/03/2021" },
+      { id: "expiryDate", label: "Scadenza / Date of expiry", value: "", placeholder: "01/03/2031" },
+      { id: "documentNumber", label: "N. Passaporto / Passport No.", value: "", placeholder: "YA1234567" },
+      { id: "authority", label: "Ente / Authority", value: "", placeholder: "QUESTURA DI ROMA" },
+    ],
+    colors: { primary: "#009246", secondary: "#CE2B37", text: "#FFFFFF", accent: "#FFFFFF" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
+  },
+  {
+    id: "spain-passport",
+    country: "Spain",
+    countryCode: "ESP",
+    documentType: "passport",
+    documentTypeLabel: "Pasaporte",
+    flag: "🇪🇸",
+    fields: [
+      { id: "type", label: "Tipo / Type", value: "P", placeholder: "P" },
+      { id: "countryCode", label: "Código / Code", value: "ESP", placeholder: "ESP" },
+      { id: "surname", label: "Apellidos / Surname", value: "", placeholder: "MARTÍNEZ LÓPEZ" },
+      { id: "givenNames", label: "Nombre / Given names", value: "", placeholder: "CARMEN" },
+      { id: "nationality", label: "Nacionalidad / Nationality", value: "ESPAÑOLA / SPANISH", placeholder: "ESPAÑOLA / SPANISH" },
+      { id: "dateOfBirth", label: "Fecha de nacimiento / Date of birth", value: "", placeholder: "20/04/1990" },
+      { id: "placeOfBirth", label: "Lugar de nacimiento / Place of birth", value: "", placeholder: "MADRID" },
+      { id: "gender", label: "Sexo / Sex", value: "", placeholder: "F" },
+      { id: "issueDate", label: "Fecha de expedición / Date of issue", value: "", placeholder: "15/09/2020" },
+      { id: "expiryDate", label: "Fecha de caducidad / Date of expiry", value: "", placeholder: "14/09/2030" },
+      { id: "documentNumber", label: "N° de pasaporte / Passport No.", value: "", placeholder: "PAA123456" },
+    ],
+    colors: { primary: "#AA151B", secondary: "#F1BF00", text: "#FFFFFF", accent: "#F1BF00" },
+    layout: { aspectRatio: "3:4", photoPosition: "left", style: "biometric" }
   },
 
-  // National IDs
+  // ===== NATIONAL IDs =====
   {
     id: "usa-id",
     country: "United States",
@@ -233,17 +420,21 @@ export const idTemplates: IDTemplate[] = [
     documentTypeLabel: "State ID Card",
     flag: "🇺🇸",
     fields: [
-      { id: "fullName", label: "Full Name", value: "", placeholder: "JOHN SMITH" },
-      { id: "address", label: "Address", value: "", placeholder: "123 MAIN ST, NEW YORK, NY 10001" },
+      { id: "fullName", label: "Full Name", value: "", placeholder: "JOHN WILLIAM SMITH" },
+      { id: "address", label: "Address", value: "", placeholder: "123 MAIN ST\nNEW YORK, NY 10001" },
       { id: "dateOfBirth", label: "Date of Birth", value: "", placeholder: "01/01/1990" },
       { id: "gender", label: "Sex", value: "", placeholder: "M" },
-      { id: "height", label: "Height", value: "", placeholder: "5-10" },
+      { id: "height", label: "Height", value: "", placeholder: "5'-10\"" },
+      { id: "weight", label: "Weight", value: "", placeholder: "175 LBS" },
       { id: "eyeColor", label: "Eyes", value: "", placeholder: "BRN" },
+      { id: "hairColor", label: "Hair", value: "", placeholder: "BRN" },
       { id: "issueDate", label: "Issue Date", value: "", placeholder: "03/15/2020" },
       { id: "expiryDate", label: "Expires", value: "", placeholder: "01/01/2028" },
-      { id: "documentNumber", label: "ID Number", value: "", placeholder: "DL123456789" },
+      { id: "documentNumber", label: "ID Number", value: "", placeholder: "I1234 56789 01234" },
+      { id: "dd", label: "DD", value: "", placeholder: "00/00/0000 00000/ABCD00" },
     ],
-    colors: { primary: "#1E3A5F", secondary: "#C5A572", text: "#FFFFFF" }
+    colors: { primary: "#1E3A5F", secondary: "#C5A572", text: "#000000", accent: "#B31942" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "modern" }
   },
   {
     id: "germany-id",
@@ -255,17 +446,19 @@ export const idTemplates: IDTemplate[] = [
     fields: [
       { id: "surname", label: "Name / Surname", value: "", placeholder: "SCHMIDT" },
       { id: "givenNames", label: "Vornamen / Given names", value: "", placeholder: "ANNA MARIA" },
-      { id: "nationality", label: "Staatsangehörigkeit / Nationality", value: "DEUTSCH", placeholder: "DEUTSCH" },
+      { id: "nationality", label: "Staatsangehörigkeit / Nationality", value: "DEUTSCH / GERMAN", placeholder: "DEUTSCH / GERMAN" },
       { id: "dateOfBirth", label: "Geburtsdatum / Date of birth", value: "", placeholder: "15.06.1992" },
       { id: "placeOfBirth", label: "Geburtsort / Place of birth", value: "", placeholder: "MÜNCHEN" },
       { id: "height", label: "Größe / Height", value: "", placeholder: "165 CM" },
-      { id: "eyeColor", label: "Augenfarbe / Eye colour", value: "", placeholder: "GRÜN" },
-      { id: "address", label: "Wohnort / Address", value: "", placeholder: "BERLIN" },
+      { id: "eyeColor", label: "Augenfarbe / Eye colour", value: "", placeholder: "GRÜN / GREEN" },
+      { id: "address", label: "Wohnort / Address", value: "", placeholder: "10115 BERLIN" },
       { id: "issueDate", label: "Ausstellungsdatum / Date of issue", value: "", placeholder: "01.03.2021" },
       { id: "expiryDate", label: "Gültig bis / Date of expiry", value: "", placeholder: "28.02.2031" },
-      { id: "documentNumber", label: "Ausweisnummer / ID No.", value: "", placeholder: "L01234567" },
+      { id: "documentNumber", label: "Ausweisnummer / ID No.", value: "", placeholder: "L01X00T47" },
+      { id: "authority", label: "Behörde / Authority", value: "", placeholder: "STADT BERLIN" },
     ],
-    colors: { primary: "#1A1A1A", secondary: "#DD0000", text: "#FFFFFF" }
+    colors: { primary: "#1A1A1A", secondary: "#DD0000", text: "#FFFFFF", accent: "#FFCC00" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "biometric" }
   },
   {
     id: "france-id",
@@ -276,18 +469,19 @@ export const idTemplates: IDTemplate[] = [
     flag: "🇫🇷",
     fields: [
       { id: "surname", label: "Nom / Surname", value: "", placeholder: "MARTIN" },
-      { id: "givenNames", label: "Prénoms / Given names", value: "", placeholder: "SOPHIE" },
+      { id: "givenNames", label: "Prénom(s) / Given names", value: "", placeholder: "SOPHIE MARIE" },
       { id: "nationality", label: "Nationalité / Nationality", value: "FRANÇAISE", placeholder: "FRANÇAISE" },
-      { id: "dateOfBirth", label: "Né(e) le / Date of birth", value: "", placeholder: "12/04/1988" },
-      { id: "placeOfBirth", label: "à / Place of birth", value: "", placeholder: "LYON" },
+      { id: "dateOfBirth", label: "Né(e) le / Date of birth", value: "", placeholder: "12.04.1988" },
+      { id: "placeOfBirth", label: "à / Place of birth", value: "", placeholder: "LYON (69)" },
       { id: "gender", label: "Sexe / Sex", value: "", placeholder: "F" },
-      { id: "address", label: "Adresse / Address", value: "", placeholder: "75001 PARIS" },
       { id: "height", label: "Taille / Height", value: "", placeholder: "1,68 M" },
-      { id: "issueDate", label: "Délivrée le / Date of issue", value: "", placeholder: "15/09/2021" },
-      { id: "expiryDate", label: "Expire le / Date of expiry", value: "", placeholder: "14/09/2031" },
-      { id: "documentNumber", label: "N° / ID No.", value: "", placeholder: "210912345678" },
+      { id: "address", label: "Adresse / Address", value: "", placeholder: "12 RUE DE LA PAIX\n75001 PARIS" },
+      { id: "issueDate", label: "Délivrée le / Date of issue", value: "", placeholder: "15.09.2021" },
+      { id: "expiryDate", label: "Expire le / Date of expiry", value: "", placeholder: "14.09.2031" },
+      { id: "documentNumber", label: "N° de carte / ID No.", value: "", placeholder: "210912345678" },
     ],
-    colors: { primary: "#002395", secondary: "#ED2939", text: "#FFFFFF" }
+    colors: { primary: "#002654", secondary: "#ED2939", text: "#FFFFFF", accent: "#FFFFFF" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "biometric" }
   },
   {
     id: "india-aadhaar",
@@ -297,13 +491,15 @@ export const idTemplates: IDTemplate[] = [
     documentTypeLabel: "Aadhaar Card",
     flag: "🇮🇳",
     fields: [
-      { id: "fullName", label: "नाम / Name", value: "", placeholder: "RAHUL KUMAR" },
+      { id: "fullName", label: "नाम / Name", value: "", placeholder: "राहुल कुमार / RAHUL KUMAR" },
       { id: "dateOfBirth", label: "जन्म तिथि / DOB", value: "", placeholder: "01/01/1990" },
-      { id: "gender", label: "लिंग / Gender", value: "", placeholder: "Male / पुरुष" },
-      { id: "address", label: "पता / Address", value: "", placeholder: "123, MG ROAD, NEW DELHI - 110001" },
+      { id: "gender", label: "लिंग / Gender", value: "", placeholder: "पुरुष / Male" },
+      { id: "address", label: "पता / Address", value: "", placeholder: "123, एम.जी. रोड\nनई दिल्ली - 110001" },
       { id: "documentNumber", label: "आधार संख्या / Aadhaar No.", value: "", placeholder: "1234 5678 9012" },
+      { id: "vid", label: "VID", value: "", placeholder: "1234 5678 9012 3456" },
     ],
-    colors: { primary: "#FF9933", secondary: "#138808", text: "#000000" }
+    colors: { primary: "#FF9933", secondary: "#138808", text: "#000000", accent: "#000080" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "modern" }
   },
   {
     id: "uk-id",
@@ -317,15 +513,84 @@ export const idTemplates: IDTemplate[] = [
       { id: "givenNames", label: "First names", value: "", placeholder: "JAMES WILLIAM" },
       { id: "dateOfBirth", label: "Date of birth", value: "", placeholder: "25/12/1995" },
       { id: "gender", label: "Sex", value: "", placeholder: "M" },
-      { id: "address", label: "Address", value: "", placeholder: "10 DOWNING ST, LONDON" },
+      { id: "nationality", label: "Nationality", value: "BRITISH CITIZEN", placeholder: "BRITISH CITIZEN" },
+      { id: "address", label: "Address", value: "", placeholder: "10 DOWNING STREET\nLONDON SW1A 2AA" },
       { id: "issueDate", label: "Valid from", value: "", placeholder: "01/01/2022" },
       { id: "expiryDate", label: "Expiry date", value: "", placeholder: "01/01/2032" },
-      { id: "documentNumber", label: "Card number", value: "", placeholder: "BROWN1234567" },
+      { id: "documentNumber", label: "Card number", value: "", placeholder: "BROWN123456789012" },
     ],
-    colors: { primary: "#012169", secondary: "#C8102E", text: "#FFFFFF" }
+    colors: { primary: "#012169", secondary: "#C8102E", text: "#FFFFFF", accent: "#FFFFFF" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "biometric" }
+  },
+  {
+    id: "italy-id",
+    country: "Italy",
+    countryCode: "ITA",
+    documentType: "national_id",
+    documentTypeLabel: "Carta d'Identità Elettronica",
+    flag: "🇮🇹",
+    fields: [
+      { id: "surname", label: "Cognome / Surname", value: "", placeholder: "BIANCHI" },
+      { id: "givenNames", label: "Nome / Given names", value: "", placeholder: "GIULIA" },
+      { id: "dateOfBirth", label: "Data di nascita / Date of birth", value: "", placeholder: "20.08.1992" },
+      { id: "placeOfBirth", label: "Luogo di nascita / Place of birth", value: "", placeholder: "MILANO" },
+      { id: "gender", label: "Sesso / Sex", value: "", placeholder: "F" },
+      { id: "height", label: "Statura / Height", value: "", placeholder: "170 CM" },
+      { id: "nationality", label: "Cittadinanza / Nationality", value: "ITALIANA", placeholder: "ITALIANA" },
+      { id: "address", label: "Residenza / Address", value: "", placeholder: "VIA ROMA 123\n20100 MILANO" },
+      { id: "issueDate", label: "Data di rilascio / Date of issue", value: "", placeholder: "15.06.2021" },
+      { id: "expiryDate", label: "Scadenza / Date of expiry", value: "", placeholder: "14.06.2031" },
+      { id: "documentNumber", label: "Numero / ID No.", value: "", placeholder: "CA12345AA" },
+    ],
+    colors: { primary: "#009246", secondary: "#F1F1F1", text: "#000000", accent: "#CE2B37" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "biometric" }
+  },
+  {
+    id: "spain-dni",
+    country: "Spain",
+    countryCode: "ESP",
+    documentType: "national_id",
+    documentTypeLabel: "DNI (Documento Nacional de Identidad)",
+    flag: "🇪🇸",
+    fields: [
+      { id: "surname", label: "Apellidos / Surname", value: "", placeholder: "GARCÍA LÓPEZ" },
+      { id: "givenNames", label: "Nombre / Given names", value: "", placeholder: "MARÍA" },
+      { id: "dateOfBirth", label: "Fecha de nacimiento / Date of birth", value: "", placeholder: "10.05.1990" },
+      { id: "placeOfBirth", label: "Lugar de nacimiento / Place of birth", value: "", placeholder: "BARCELONA" },
+      { id: "gender", label: "Sexo / Sex", value: "", placeholder: "M" },
+      { id: "nationality", label: "Nacionalidad / Nationality", value: "ESPAÑOLA", placeholder: "ESPAÑOLA" },
+      { id: "address", label: "Domicilio / Address", value: "", placeholder: "CALLE MAYOR 1\n28001 MADRID" },
+      { id: "issueDate", label: "Fecha de expedición / Date of issue", value: "", placeholder: "01.03.2021" },
+      { id: "expiryDate", label: "Fecha de caducidad / Date of expiry", value: "", placeholder: "01.03.2031" },
+      { id: "documentNumber", label: "DNI / ID No.", value: "", placeholder: "12345678A" },
+    ],
+    colors: { primary: "#AA151B", secondary: "#F1BF00", text: "#FFFFFF", accent: "#F1BF00" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "biometric" }
+  },
+  {
+    id: "netherlands-id",
+    country: "Netherlands",
+    countryCode: "NLD",
+    documentType: "national_id",
+    documentTypeLabel: "Identiteitskaart",
+    flag: "🇳🇱",
+    fields: [
+      { id: "surname", label: "Achternaam / Surname", value: "", placeholder: "DE VRIES" },
+      { id: "givenNames", label: "Voornamen / Given names", value: "", placeholder: "EMMA SOPHIE" },
+      { id: "dateOfBirth", label: "Geboortedatum / Date of birth", value: "", placeholder: "15.03.1995" },
+      { id: "placeOfBirth", label: "Geboorteplaats / Place of birth", value: "", placeholder: "AMSTERDAM" },
+      { id: "gender", label: "Geslacht / Sex", value: "", placeholder: "V / F" },
+      { id: "nationality", label: "Nationaliteit / Nationality", value: "NEDERLANDSE", placeholder: "NEDERLANDSE" },
+      { id: "height", label: "Lengte / Height", value: "", placeholder: "1.72 M" },
+      { id: "issueDate", label: "Afgiftedatum / Date of issue", value: "", placeholder: "01.06.2021" },
+      { id: "expiryDate", label: "Geldig tot / Date of expiry", value: "", placeholder: "01.06.2031" },
+      { id: "documentNumber", label: "Documentnummer / ID No.", value: "", placeholder: "SPECI2021" },
+    ],
+    colors: { primary: "#21468B", secondary: "#AE1C28", text: "#FFFFFF", accent: "#FFFFFF" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "biometric" }
   },
 
-  // Driving Licenses
+  // ===== DRIVING LICENSES =====
   {
     id: "usa-dl",
     country: "United States",
@@ -335,17 +600,23 @@ export const idTemplates: IDTemplate[] = [
     flag: "🇺🇸",
     fields: [
       { id: "fullName", label: "Name", value: "", placeholder: "SMITH, JOHN WILLIAM" },
-      { id: "address", label: "Address", value: "", placeholder: "123 MAIN STREET, LOS ANGELES, CA 90001" },
+      { id: "address", label: "Address", value: "", placeholder: "123 MAIN STREET\nLOS ANGELES, CA 90001" },
       { id: "dateOfBirth", label: "DOB", value: "", placeholder: "01/01/1990" },
       { id: "gender", label: "Sex", value: "", placeholder: "M" },
-      { id: "height", label: "HGT", value: "", placeholder: "5-10" },
+      { id: "height", label: "HGT", value: "", placeholder: "5'-10\"" },
+      { id: "weight", label: "WGT", value: "", placeholder: "175 LBS" },
       { id: "eyeColor", label: "EYES", value: "", placeholder: "BRN" },
+      { id: "hairColor", label: "HAIR", value: "", placeholder: "BRN" },
       { id: "licenseClass", label: "Class", value: "", placeholder: "C" },
+      { id: "restrictions", label: "RSTR", value: "", placeholder: "NONE" },
+      { id: "endorsements", label: "END", value: "", placeholder: "NONE" },
       { id: "issueDate", label: "ISS", value: "", placeholder: "03/15/2020" },
       { id: "expiryDate", label: "EXP", value: "", placeholder: "01/01/2028" },
       { id: "documentNumber", label: "DL No.", value: "", placeholder: "Y1234567" },
+      { id: "dd", label: "DD", value: "", placeholder: "00/00/0000/YYYY/NN/0000" },
     ],
-    colors: { primary: "#1E3A5F", secondary: "#FFD700", text: "#FFFFFF" }
+    colors: { primary: "#1E3A5F", secondary: "#FFD700", text: "#000000", accent: "#B31942" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "modern" }
   },
   {
     id: "uk-dl",
@@ -360,13 +631,15 @@ export const idTemplates: IDTemplate[] = [
       { id: "dateOfBirth", label: "3. Date of birth", value: "", placeholder: "15.03.1988" },
       { id: "placeOfBirth", label: "3. Place of birth", value: "", placeholder: "UNITED KINGDOM" },
       { id: "issueDate", label: "4a. Date of issue", value: "", placeholder: "19.01.2019" },
-      { id: "expiryDate", label: "4b. Date of expiry", value: "", placeholder: "19.01.2029" },
+      { id: "expiryDate", label: "4b. Date of expiry", value: "", placeholder: "19.03.2058" },
+      { id: "photoExpiry", label: "4b. Photo expires", value: "", placeholder: "19.01.2029" },
       { id: "issuingAuthority", label: "4c. Issued by", value: "", placeholder: "DVLA" },
-      { id: "documentNumber", label: "5. Licence number", value: "", placeholder: "MORGA803156SA9IJ" },
-      { id: "address", label: "8. Address", value: "", placeholder: "88 HIGH STREET, LONDON, W1 2AB" },
+      { id: "documentNumber", label: "5. Licence number", value: "", placeholder: "MORGA803156SA9IJ 35" },
+      { id: "address", label: "8. Address", value: "", placeholder: "88 HIGH STREET\nLONDON W1 2AB" },
       { id: "licenseClass", label: "9. Categories", value: "", placeholder: "AM, A1, A2, A, B, BE" },
     ],
-    colors: { primary: "#E91E8C", secondary: "#00A3E0", text: "#FFFFFF" }
+    colors: { primary: "#E91E8C", secondary: "#00A3E0", text: "#000000", accent: "#FFFFFF" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "modern" }
   },
   {
     id: "germany-dl",
@@ -383,11 +656,34 @@ export const idTemplates: IDTemplate[] = [
       { id: "issueDate", label: "4a. Datum der Erteilung", value: "", placeholder: "15.06.2019" },
       { id: "expiryDate", label: "4b. Ablaufdatum", value: "", placeholder: "14.06.2034" },
       { id: "issuingAuthority", label: "4c. Ausstellende Behörde", value: "", placeholder: "STADT HAMBURG" },
-      { id: "documentNumber", label: "5. Führerscheinnummer", value: "", placeholder: "B123456789012" },
-      { id: "address", label: "8. Wohnort", value: "", placeholder: "HAMBURG" },
+      { id: "documentNumber", label: "5. Führerscheinnummer", value: "", placeholder: "B123456789012345" },
+      { id: "address", label: "8. Wohnort", value: "", placeholder: "20095 HAMBURG" },
       { id: "licenseClass", label: "9. Klassen", value: "", placeholder: "AM, A1, A2, A, B, BE" },
     ],
-    colors: { primary: "#E91E8C", secondary: "#00A3E0", text: "#000000" }
+    colors: { primary: "#E91E8C", secondary: "#00A3E0", text: "#000000", accent: "#FFD700" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "modern" }
+  },
+  {
+    id: "france-dl",
+    country: "France",
+    countryCode: "FRA",
+    documentType: "driving_license",
+    documentTypeLabel: "Permis de Conduire",
+    flag: "🇫🇷",
+    fields: [
+      { id: "surname", label: "1. Nom", value: "", placeholder: "BERNARD" },
+      { id: "givenNames", label: "2. Prénom", value: "", placeholder: "PIERRE JEAN" },
+      { id: "dateOfBirth", label: "3. Date de naissance", value: "", placeholder: "20.05.1990" },
+      { id: "placeOfBirth", label: "3. Lieu de naissance", value: "", placeholder: "MARSEILLE" },
+      { id: "issueDate", label: "4a. Date de délivrance", value: "", placeholder: "01.03.2020" },
+      { id: "expiryDate", label: "4b. Date d'expiration", value: "", placeholder: "01.03.2035" },
+      { id: "issuingAuthority", label: "4c. Autorité", value: "", placeholder: "PRÉFECTURE DES BDR" },
+      { id: "documentNumber", label: "5. Numéro de permis", value: "", placeholder: "20AA00000" },
+      { id: "address", label: "8. Adresse", value: "", placeholder: "1 RUE DE LA RÉPUBLIQUE\n13001 MARSEILLE" },
+      { id: "licenseClass", label: "9. Catégories", value: "", placeholder: "AM, A1, A2, A, B, BE" },
+    ],
+    colors: { primary: "#E91E8C", secondary: "#00A3E0", text: "#000000", accent: "#002654" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "modern" }
   },
   {
     id: "india-dl",
@@ -401,13 +697,16 @@ export const idTemplates: IDTemplate[] = [
       { id: "fatherName", label: "S/D/W of", value: "", placeholder: "RAJESH KUMAR" },
       { id: "dateOfBirth", label: "DOB", value: "", placeholder: "15/08/1992" },
       { id: "bloodType", label: "Blood Group", value: "", placeholder: "B+" },
-      { id: "address", label: "Address", value: "", placeholder: "45 NEHRU NAGAR, MUMBAI - 400001" },
+      { id: "address", label: "Address", value: "", placeholder: "45 NEHRU NAGAR\nMUMBAI - 400001\nMAHARASHTRA" },
       { id: "issueDate", label: "Date of Issue", value: "", placeholder: "01/01/2020" },
       { id: "expiryDate", label: "Valid Till (Non-Transport)", value: "", placeholder: "31/12/2040" },
+      { id: "transportExpiry", label: "Valid Till (Transport)", value: "", placeholder: "N/A" },
       { id: "licenseClass", label: "Class of Vehicle", value: "", placeholder: "MCWG, LMV" },
       { id: "documentNumber", label: "DL No.", value: "", placeholder: "MH01 20200012345" },
+      { id: "issuingAuthority", label: "Issuing Authority", value: "", placeholder: "RTO MUMBAI" },
     ],
-    colors: { primary: "#FF9933", secondary: "#138808", text: "#FFFFFF" }
+    colors: { primary: "#FF9933", secondary: "#138808", text: "#000000", accent: "#000080" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "classic" }
   },
   {
     id: "australia-dl",
@@ -419,14 +718,59 @@ export const idTemplates: IDTemplate[] = [
     fields: [
       { id: "surname", label: "Family name", value: "", placeholder: "THOMPSON" },
       { id: "givenNames", label: "Given names", value: "", placeholder: "MICHAEL JAMES" },
-      { id: "address", label: "Address", value: "", placeholder: "42 HARBOUR ST, SYDNEY NSW 2000" },
+      { id: "address", label: "Address", value: "", placeholder: "42 HARBOUR STREET\nSYDNEY NSW 2000" },
       { id: "dateOfBirth", label: "Date of birth", value: "", placeholder: "22/07/1993" },
       { id: "licenseClass", label: "Licence class", value: "", placeholder: "C" },
+      { id: "conditions", label: "Conditions", value: "", placeholder: "S" },
       { id: "issueDate", label: "Issue date", value: "", placeholder: "01/05/2021" },
       { id: "expiryDate", label: "Expiry date", value: "", placeholder: "22/07/2026" },
       { id: "documentNumber", label: "Licence No.", value: "", placeholder: "12345678" },
+      { id: "cardNumber", label: "Card No.", value: "", placeholder: "1234567890" },
     ],
-    colors: { primary: "#00008B", secondary: "#FFD700", text: "#FFFFFF" }
+    colors: { primary: "#00008B", secondary: "#FFD700", text: "#000000", accent: "#FFFFFF" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "modern" }
+  },
+  {
+    id: "canada-dl",
+    country: "Canada (Ontario)",
+    countryCode: "CAN",
+    documentType: "driving_license",
+    documentTypeLabel: "Driver's Licence",
+    flag: "🇨🇦",
+    fields: [
+      { id: "surname", label: "Last Name / Nom", value: "", placeholder: "TREMBLAY" },
+      { id: "givenNames", label: "First Name / Prénom", value: "", placeholder: "JEAN PAUL" },
+      { id: "address", label: "Address / Adresse", value: "", placeholder: "123 QUEEN ST W\nTORONTO ON M5H 2M9" },
+      { id: "dateOfBirth", label: "Date of Birth / Date de naissance", value: "", placeholder: "1990/06/15" },
+      { id: "gender", label: "Sex / Sexe", value: "", placeholder: "M" },
+      { id: "height", label: "Height / Taille", value: "", placeholder: "180 CM" },
+      { id: "licenseClass", label: "Class / Classe", value: "", placeholder: "G" },
+      { id: "issueDate", label: "Issue Date / Date de délivrance", value: "", placeholder: "2021/03/15" },
+      { id: "expiryDate", label: "Expiry / Expiration", value: "", placeholder: "2026/06/15" },
+      { id: "documentNumber", label: "Licence No. / No de permis", value: "", placeholder: "T1234-56789-90123" },
+    ],
+    colors: { primary: "#003087", secondary: "#FF0000", text: "#000000", accent: "#FFFFFF" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "modern" }
+  },
+  {
+    id: "japan-dl",
+    country: "Japan",
+    countryCode: "JPN",
+    documentType: "driving_license",
+    documentTypeLabel: "運転免許証",
+    flag: "🇯🇵",
+    fields: [
+      { id: "fullName", label: "氏名 / Name", value: "", placeholder: "山田 太郎 / YAMADA TARO" },
+      { id: "dateOfBirth", label: "生年月日 / Date of birth", value: "", placeholder: "平成2年1月15日" },
+      { id: "address", label: "住所 / Address", value: "", placeholder: "東京都渋谷区道玄坂1-1-1" },
+      { id: "issueDate", label: "交付 / Issue date", value: "", placeholder: "令和3年6月1日" },
+      { id: "expiryDate", label: "有効期限 / Expiry", value: "", placeholder: "令和8年7月1日まで有効" },
+      { id: "licenseClass", label: "免許の種類 / Licence class", value: "", placeholder: "普通" },
+      { id: "conditions", label: "条件等 / Conditions", value: "", placeholder: "眼鏡等" },
+      { id: "documentNumber", label: "番号 / Number", value: "", placeholder: "第 123456789012 号" },
+    ],
+    colors: { primary: "#4169E1", secondary: "#FFD700", text: "#000000", accent: "#BC002D" },
+    layout: { aspectRatio: "16:10", photoPosition: "left", style: "classic" }
   },
 ];
 
@@ -440,4 +784,13 @@ export const getTemplateById = (id: string) => {
 
 export const getTemplatesByCountry = (countryCode: string) => {
   return idTemplates.filter(t => t.countryCode === countryCode);
+};
+
+export const searchTemplates = (query: string) => {
+  const lowerQuery = query.toLowerCase();
+  return idTemplates.filter(t => 
+    t.country.toLowerCase().includes(lowerQuery) ||
+    t.documentTypeLabel.toLowerCase().includes(lowerQuery) ||
+    t.countryCode.toLowerCase().includes(lowerQuery)
+  );
 };
