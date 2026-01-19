@@ -18,7 +18,8 @@ import {
   Sparkles,
   RefreshCw, 
   Eye, 
-  ArrowRight
+  ArrowRight,
+  LayoutTemplate
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -26,6 +27,8 @@ import { useDocumentOCR, ExtractedDocumentData } from "@/hooks/useDocumentOCR";
 import { useDocumentStorage, UploadedDocument } from "@/hooks/useDocumentStorage";
 import { useDocumentEditor } from "@/hooks/useDocumentEditor";
 import { ZoomableImage } from "@/components/ZoomableImage";
+import { TemplateSelector } from "@/components/TemplateSelector";
+import { IDTemplate } from "@/data/idTemplates";
 
 type EditorStep = "upload" | "detect" | "photo" | "text" | "compliance" | "export";
 
@@ -53,6 +56,8 @@ const Editor = () => {
   });
   const [textFields, setTextFields] = useState<TextField[]>([]);
   const [editedDocumentUrl, setEditedDocumentUrl] = useState<string | null>(null);
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<IDTemplate | null>(null);
 
   const { extractTextFromDocument, isExtracting, error: ocrError } = useDocumentOCR();
   const { uploadDocument, deleteDocument, isUploading, uploadProgress } = useDocumentStorage();
@@ -305,6 +310,34 @@ const Editor = () => {
     setUploadedDocument(null);
     setTextFields([]);
     setEditedDocumentUrl(null);
+    setShowTemplateSelector(false);
+    setSelectedTemplate(null);
+  };
+
+  const handleSelectTemplate = (template: IDTemplate) => {
+    setSelectedTemplate(template);
+    setShowTemplateSelector(false);
+    
+    // Convert template fields to TextField format
+    const fields: TextField[] = template.fields.map(field => ({
+      id: field.id,
+      label: field.label,
+      value: field.value || "",
+      originalValue: field.placeholder,
+      editable: true
+    }));
+    
+    setTextFields(fields);
+    setPreviewUrl(null); // No image for template
+    setUploadedFile(null);
+    
+    toast({
+      title: "Template Selected",
+      description: `${template.country} ${template.documentTypeLabel} template loaded with ${fields.length} fields.`
+    });
+    
+    // Skip to text editing step directly (no photo for templates)
+    setCurrentStep("text");
   };
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -323,46 +356,95 @@ const Editor = () => {
   const renderStepContent = () => {
     switch (currentStep) {
       case "upload":
+        // Show template selector if user clicked "Use Template"
+        if (showTemplateSelector) {
+          return (
+            <div className="flex-1 flex items-center justify-center p-8">
+              <TemplateSelector 
+                onSelectTemplate={handleSelectTemplate}
+                onClose={() => setShowTemplateSelector(false)}
+              />
+            </div>
+          );
+        }
+
         return (
           <div className="flex-1 flex items-center justify-center p-8">
-            <div
-              className={`w-full max-w-xl border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-300 ${
-                dragActive 
-                  ? "border-accent bg-accent/10" 
-                  : "border-border hover:border-primary/50"
-              }`}
-              onDragEnter={handleDrag}
-              onDragLeave={handleDrag}
-              onDragOver={handleDrag}
-              onDrop={handleDrop}
-            >
-              <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-6">
-                <Upload className="w-8 h-8 text-primary" />
+            <div className="w-full max-w-xl space-y-6">
+              {/* Upload Option */}
+              <div
+                className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all duration-300 ${
+                  dragActive 
+                    ? "border-accent bg-accent/10" 
+                    : "border-border hover:border-primary/50"
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Upload className="w-7 h-7 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
+                  Upload Your Document
+                </h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  Drag and drop your passport, ID, or driving license here
+                </p>
+                <input
+                  type="file"
+                  id="file-upload"
+                  className="hidden"
+                  accept=".jpg,.jpeg,.png,.pdf"
+                  onChange={handleFileInput}
+                />
+                <label htmlFor="file-upload">
+                  <Button variant="accent" size="lg" className="cursor-pointer" asChild>
+                    <span>
+                      <Upload className="w-5 h-5" />
+                      Choose File
+                    </span>
+                  </Button>
+                </label>
+                <p className="text-xs text-muted-foreground mt-3">
+                  Supports JPG, PNG, PDF • Max 10MB
+                </p>
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
-                Upload Your Document
-              </h3>
-              <p className="text-muted-foreground mb-6">
-                Drag and drop your passport, ID, or driving license here
-              </p>
-              <input
-                type="file"
-                id="file-upload"
-                className="hidden"
-                accept=".jpg,.jpeg,.png,.pdf"
-                onChange={handleFileInput}
-              />
-              <label htmlFor="file-upload">
-                <Button variant="accent" size="lg" className="cursor-pointer" asChild>
-                  <span>
-                    <Upload className="w-5 h-5" />
-                    Choose File
-                  </span>
-                </Button>
-              </label>
-              <p className="text-xs text-muted-foreground mt-4">
-                Supports JPG, PNG, PDF • Max 10MB
-              </p>
+
+              {/* Divider */}
+              <div className="flex items-center gap-4">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-sm text-muted-foreground font-medium">OR</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+
+              {/* Template Option */}
+              <div 
+                onClick={() => setShowTemplateSelector(true)}
+                className="border-2 border-border rounded-2xl p-6 text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all duration-300 group"
+              >
+                <div className="w-14 h-14 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-accent/20 transition-colors">
+                  <LayoutTemplate className="w-7 h-7 text-accent" />
+                </div>
+                <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
+                  Use a Template
+                </h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  Choose from 20+ country templates for passports, IDs, and licenses
+                </p>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <span className="text-xl">🇺🇸</span>
+                  <span className="text-xl">🇬🇧</span>
+                  <span className="text-xl">🇨🇦</span>
+                  <span className="text-xl">🇩🇪</span>
+                  <span className="text-xl">🇫🇷</span>
+                  <span className="text-xl">🇮🇳</span>
+                  <span className="text-xl">🇯🇵</span>
+                  <span className="text-xl">🇦🇺</span>
+                  <span className="text-xs text-muted-foreground ml-1">+more</span>
+                </div>
+              </div>
             </div>
           </div>
         );
