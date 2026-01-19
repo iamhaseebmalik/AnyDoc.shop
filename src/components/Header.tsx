@@ -38,9 +38,11 @@ const Header = () => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm">
-              Log In
-            </Button>
+            <Link to="/auth">
+              <Button variant="ghost" size="sm">
+                Log In
+              </Button>
+            </Link>
             <Link to="/editor">
               <Button variant="accent" size="sm">
                 Start Editing
@@ -74,9 +76,11 @@ const Header = () => {
                 Compliance
               </a>
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
-                <Button variant="ghost" size="sm" className="justify-start">
-                  Log In
-                </Button>
+                <Link to="/auth">
+                  <Button variant="ghost" size="sm" className="justify-start w-full">
+                    Log In
+                  </Button>
+                </Link>
                 <Link to="/editor">
                   <Button variant="accent" size="sm" className="w-full">
                     Start Editing

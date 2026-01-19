@@ -26,8 +26,10 @@ import { toast } from "@/hooks/use-toast";
 import { useDocumentOCR, ExtractedDocumentData } from "@/hooks/useDocumentOCR";
 import { useDocumentStorage, UploadedDocument } from "@/hooks/useDocumentStorage";
 import { useDocumentEditor } from "@/hooks/useDocumentEditor";
+import { useEditingHistory } from "@/hooks/useEditingHistory";
 import { ZoomableImage } from "@/components/ZoomableImage";
 import { TemplateSelector } from "@/components/TemplateSelector";
+import { UserMenu } from "@/components/UserMenu";
 import { IDTemplate } from "@/data/idTemplates";
 
 type EditorStep = "upload" | "detect" | "photo" | "text" | "compliance" | "export";
@@ -64,7 +66,9 @@ const Editor = () => {
   const { extractTextFromDocument, isExtracting, error: ocrError } = useDocumentOCR();
   const { uploadDocument, deleteDocument, isUploading, uploadProgress } = useDocumentStorage();
   const { applyEdits, retryEdits, isEditing, error: editError, lastEditResult, currentAttempt } = useDocumentEditor();
+  const { saveToHistory, isAuthenticated } = useEditingHistory();
   const [showComparison, setShowComparison] = useState(false);
+  const [historySaved, setHistorySaved] = useState(false);
 
   const steps = [
     { id: "upload", label: "Upload", icon: Upload },
@@ -1104,6 +1108,19 @@ const Editor = () => {
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
 
+            // Save to editing history if authenticated and not already saved
+            if (isAuthenticated && !historySaved) {
+              const documentName = uploadedFile?.name || (selectedTemplate ? `${selectedTemplate.country} ${selectedTemplate.documentTypeLabel}` : "Untitled Document");
+              const documentType = selectedTemplate?.documentTypeLabel || "Custom Upload";
+              const editedFields = changedFields.reduce((acc, field) => {
+                acc[field.label] = { original: field.originalValue, new: field.value };
+                return acc;
+              }, {} as Record<string, { original: string; new: string }>);
+              
+              await saveToHistory({ documentName, documentType, editedFields });
+              setHistorySaved(true);
+            }
+
             toast({
               title: "Download complete",
               description: `Your document has been downloaded as ${format}.`
@@ -1357,7 +1374,9 @@ const Editor = () => {
           </div>
         </div>
 
-        <div className="w-24" />
+        <div className="w-24 flex justify-end">
+          <UserMenu />
+        </div>
       </header>
 
       {/* Content */}
