@@ -6,10 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileCheck, Mail, Lock, User, AlertCircle, ArrowLeft } from "lucide-react";
+import { FileCheck, Mail, Lock, User, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Link } from "react-router-dom";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -116,15 +115,12 @@ export default function Auth() {
       {/* Header */}
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-4">
-          <Link to="/" className="flex items-center gap-2 w-fit">
-            <ArrowLeft className="h-4 w-4" />
-            <div className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg gradient-hero flex items-center justify-center">
-                <FileCheck className="h-5 w-5 text-primary-foreground" />
-              </div>
-              <span className="text-xl font-bold text-foreground">IDPerfect.ai</span>
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-8 rounded-lg gradient-hero flex items-center justify-center">
+              <FileCheck className="h-5 w-5 text-primary-foreground" />
             </div>
-          </Link>
+            <span className="text-xl font-bold text-foreground">IDPerfect.ai</span>
+          </div>
         </div>
       </header>
 
