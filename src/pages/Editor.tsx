@@ -1048,6 +1048,26 @@ const Editor = () => {
         const hasEdits = textFields.some(f => f.value !== f.originalValue);
         const changedFields = textFields.filter(f => f.value !== f.originalValue);
         
+        // Helper to convert blob URL to base64
+        const urlToBase64 = async (url: string): Promise<string | null> => {
+          try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return new Promise((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                const result = reader.result as string;
+                const base64 = result.split(",")[1];
+                resolve(base64);
+              };
+              reader.onerror = () => resolve(null);
+              reader.readAsDataURL(blob);
+            });
+          } catch {
+            return null;
+          }
+        };
+        
         const handleApplyEdits = async () => {
           if (!uploadedFile) {
             toast({
@@ -1058,9 +1078,12 @@ const Editor = () => {
             return;
           }
 
+          const hasFacePhoto = !!templatePhotoUrl;
           toast({
             title: "Applying edits",
-            description: "AI is updating your document with the new text..."
+            description: hasFacePhoto 
+              ? "AI is updating your document with new text and photo..." 
+              : "AI is updating your document with the new text..."
           });
 
           const originalFields = textFields.map(f => ({ 
@@ -1074,7 +1097,13 @@ const Editor = () => {
             value: f.value 
           }));
 
-          const resultUrl = await applyEdits(uploadedFile, originalFields, editedFields);
+          // Convert face photo to base64 if present
+          let facePhotoBase64: string | null = null;
+          if (templatePhotoUrl) {
+            facePhotoBase64 = await urlToBase64(templatePhotoUrl);
+          }
+
+          const resultUrl = await applyEdits(uploadedFile, originalFields, editedFields, facePhotoBase64);
           
           if (resultUrl) {
             setEditedDocumentUrl(resultUrl);
@@ -1111,7 +1140,13 @@ const Editor = () => {
             value: f.value 
           }));
 
-          const resultUrl = await retryEdits(uploadedFile, originalFields, editedFields);
+          // Convert face photo to base64 if present
+          let facePhotoBase64: string | null = null;
+          if (templatePhotoUrl) {
+            facePhotoBase64 = await urlToBase64(templatePhotoUrl);
+          }
+
+          const resultUrl = await retryEdits(uploadedFile, originalFields, editedFields, facePhotoBase64);
           
           if (resultUrl) {
             setEditedDocumentUrl(resultUrl);

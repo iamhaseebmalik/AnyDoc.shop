@@ -33,6 +33,7 @@ export const useDocumentEditor = () => {
     file: File,
     originalFields: { id: string; label: string; value: string }[],
     editedFields: { id: string; label: string; value: string }[],
+    facePhotoBase64?: string | null,
     attempt: number = 1
   ): Promise<string | null> => {
     setIsEditing(true);
@@ -50,7 +51,10 @@ export const useDocumentEditor = () => {
         newValue: editedFields[index]?.value || original.value,
       })).filter(edit => edit.originalValue !== edit.newValue);
 
-      if (textEdits.length === 0) {
+      const hasTextEdits = textEdits.length > 0;
+      const hasFacePhoto = !!facePhotoBase64;
+
+      if (!hasTextEdits && !hasFacePhoto) {
         // No edits, return original file as data URL
         const originalUrl = `data:${file.type};base64,${base64}`;
         setEditedImageUrl(originalUrl);
@@ -65,13 +69,14 @@ export const useDocumentEditor = () => {
         return originalUrl;
       }
 
-      console.log(`Attempt ${attempt}: Calling edit-document with ${textEdits.length} edits`);
+      console.log(`Attempt ${attempt}: Calling edit-document with ${textEdits.length} text edits, face photo: ${hasFacePhoto}`);
       
       const { data, error: fnError } = await supabase.functions.invoke("edit-document", {
         body: {
           imageBase64: base64,
           mimeType: file.type,
           textEdits,
+          facePhotoBase64,
           attempt,
         },
       });
@@ -122,10 +127,11 @@ export const useDocumentEditor = () => {
   const retryEdits = async (
     file: File,
     originalFields: { id: string; label: string; value: string }[],
-    editedFields: { id: string; label: string; value: string }[]
+    editedFields: { id: string; label: string; value: string }[],
+    facePhotoBase64?: string | null
   ): Promise<string | null> => {
     const nextAttempt = currentAttempt + 1;
-    return applyEdits(file, originalFields, editedFields, nextAttempt);
+    return applyEdits(file, originalFields, editedFields, facePhotoBase64, nextAttempt);
   };
 
   const fileToBase64 = (file: File): Promise<string> => {
