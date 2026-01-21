@@ -457,14 +457,15 @@ const Editor = () => {
                   accept=".jpg,.jpeg,.png,.pdf"
                   onChange={handleFileInput}
                 />
-                <label htmlFor="file-upload">
-                  <Button variant="accent" size="lg" className="cursor-pointer" asChild>
-                    <span>
-                      <Upload className="w-5 h-5" />
-                      Choose File
-                    </span>
-                  </Button>
-                </label>
+                <Button 
+                  variant="accent" 
+                  size="lg" 
+                  className="cursor-pointer"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                >
+                  <Upload className="w-5 h-5" />
+                  Choose File
+                </Button>
                 <p className="text-xs text-muted-foreground mt-3">
                   Supports JPG, PNG, PDF • Max 10MB
                 </p>
