@@ -657,11 +657,14 @@ const Editor = () => {
                             accept=".jpg,.jpeg,.png"
                             onChange={handleTemplatePhotoUpload}
                           />
-                          <label htmlFor="template-photo-replace">
-                            <Button variant="ghost" size="sm" className="mt-2 cursor-pointer" asChild>
-                              <span>Replace Photo</span>
-                            </Button>
-                          </label>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="mt-2 cursor-pointer"
+                            onClick={() => document.getElementById('template-photo-replace')?.click()}
+                          >
+                            Replace Photo
+                          </Button>
                         </div>
                       </div>
                     ) : (
@@ -679,14 +682,14 @@ const Editor = () => {
                           accept=".jpg,.jpeg,.png"
                           onChange={handleTemplatePhotoUpload}
                         />
-                        <label htmlFor="template-photo-upload">
-                          <Button variant="accent" className="cursor-pointer" asChild>
-                            <span>
-                              <Upload className="w-4 h-4" />
-                              Choose Photo
-                            </span>
-                          </Button>
-                        </label>
+                        <Button 
+                          variant="accent" 
+                          className="cursor-pointer"
+                          onClick={() => document.getElementById('template-photo-upload')?.click()}
+                        >
+                          <Upload className="w-4 h-4" />
+                          Choose Photo
+                        </Button>
                         <p className="text-xs text-muted-foreground mt-3">
                           JPG or PNG • Max 5MB
                         </p>
