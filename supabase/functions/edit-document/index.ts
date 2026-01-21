@@ -29,12 +29,22 @@ const buildEditPrompt = (edits: TextEdit[], hasFacePhoto: boolean, attempt: numb
 `;
 
   if (hasFacePhoto) {
-    prompt += `FACE PHOTO REPLACEMENT:
-- Replace the existing face/portrait photo in the document with the NEW face photo provided
-- The new face photo is the SECOND image in this request
-- Fit the new face naturally into the photo area, maintaining proper aspect ratio
-- Match the lighting and style of the document
-- Ensure the face photo looks authentic and professionally placed
+    prompt += `FACE PHOTO REPLACEMENT - MAKE IT LOOK LIKE A REAL PRINTED ID PHOTO:
+The new face photo is the SECOND image provided. Replace the existing photo with it, but make it look like an ORIGINAL PRINTED ID PHOTO, NOT a digital overlay.
+
+CRITICAL REALISM REQUIREMENTS:
+1. SIZE & POSITION: Match the EXACT size, position, and boundaries of the original photo area
+2. PRINT QUALITY: Apply subtle print texture/grain to match how photos look when printed on ID cards
+3. COLOR GRADING: Adjust to typical ID photo colors - slightly desaturated, neutral tones, not overly vibrant
+4. LIGHTING: Flatten the lighting to match standard ID photo lighting (even, front-lit, minimal shadows)
+5. SKIN TONES: Normalize to look like a passport/ID photo (natural but not overly warm or cool)
+6. EDGES: Integrate edges naturally - ID photos have clean edges that blend with the card
+7. PHOTO BORDER: Maintain any existing photo borders, frames, or rounded corners from the original
+8. BACKGROUND: If face has different background, blend it to match ID standards (plain, light colored)
+9. TEXTURE MATCHING: The photo should have the same texture/quality as the rest of the document
+10. NO DIGITAL ARTIFACTS: No sharp cutout edges, no obvious overlays, no mismatched lighting
+
+The photo MUST look like it was ORIGINALLY PRINTED on this ID during manufacturing, not edited later.
 
 `;
   }
