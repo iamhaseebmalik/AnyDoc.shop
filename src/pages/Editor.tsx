@@ -1338,7 +1338,7 @@ const Editor = () => {
             <Shield className="w-4 h-4 text-primary-foreground" />
           </div>
           <span className="font-semibold text-foreground">
-            IDPerfect<span className="text-accent">.ai</span>
+            onedirham<span className="text-accent">.xyz</span>
           </span>
         </div>
 
