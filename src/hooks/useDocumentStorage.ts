@@ -38,6 +38,10 @@ export const useDocumentStorage = () => {
 
       setUploadProgress(20);
 
+      // Get current user session
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id || null;
+
       // Upload to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from("documents")
@@ -52,7 +56,7 @@ export const useDocumentStorage = () => {
 
       setUploadProgress(60);
 
-      // Create tracking record
+      // Create tracking record - include user_id for authenticated users
       const { data: recordData, error: recordError } = await supabase
         .from("document_uploads")
         .insert({
@@ -61,6 +65,7 @@ export const useDocumentStorage = () => {
           file_size: file.size,
           mime_type: file.type,
           session_id: sessionId,
+          user_id: userId, // Set user_id for authenticated users
         })
         .select()
         .single();
