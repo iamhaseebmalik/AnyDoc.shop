@@ -15,50 +15,94 @@ interface EditRequest {
   imageBase64: string;
   mimeType: string;
   textEdits: TextEdit[];
+  facePhotoBase64?: string;
   attempt?: number;
 }
 
-const buildEditPrompt = (edits: TextEdit[], attempt: number = 1): string => {
-  const editInstructions = edits
-    .map((edit, i) => `${i + 1}. Find "${edit.originalValue}" → Replace with "${edit.newValue}"`)
-    .join('\n');
+const buildEditPrompt = (edits: TextEdit[], hasFacePhoto: boolean, attempt: number = 1): string => {
+  const editInstructions = edits.length > 0
+    ? edits.map((edit, i) => `${i + 1}. Find "${edit.originalValue}" → Replace with "${edit.newValue}"`).join('\n')
+    : '';
 
-  // More detailed prompt for retry attempts
-  const basePrompt = `You are a professional document image editor. Edit this official document with PRECISE text replacements:
+  let prompt = `You are a professional document image editor. Edit this official document with the following changes:
 
-TEXT CHANGES REQUIRED:
+`;
+
+  if (hasFacePhoto) {
+    prompt += `FACE PHOTO REPLACEMENT:
+- Replace the existing face/portrait photo in the document with the NEW face photo provided
+- The new face photo is the SECOND image in this request
+- Fit the new face naturally into the photo area, maintaining proper aspect ratio
+- Match the lighting and style of the document
+- Ensure the face photo looks authentic and professionally placed
+
+`;
+  }
+
+  if (edits.length > 0) {
+    prompt += `TEXT CHANGES REQUIRED:
 ${editInstructions}
 
-CRITICAL EDITING RULES:
+`;
+  }
+
+  prompt += `CRITICAL EDITING RULES:
 1. FONT MATCHING: Use the EXACT same font family, weight, size, and color as the original text
 2. POSITIONING: Keep text in the EXACT same position - do not shift or move anything
 3. PRESERVATION: Keep ALL other elements unchanged:
-   - Photos, stamps, watermarks, seals
-   - Borders, lines, backgrounds
+   - Stamps, watermarks, seals, borders, lines, backgrounds
    - All other text not listed above
 4. AUTHENTICITY: The result must look like an unaltered official document
 5. QUALITY: Maintain the same image resolution and clarity`;
 
   if (attempt > 1) {
-    return `${basePrompt}
+    prompt += `
 
 IMPORTANT: This is attempt #${attempt}. Previous attempts may not have been perfect.
 Please be EXTRA careful to:
 - Match fonts EXACTLY (look at the thickness, spacing, and style)
 - Place new text in the PRECISE location of the original
+- Ensure the face photo blends seamlessly with the document
 - Ensure no visual artifacts or blending issues
 - The document must look completely authentic`;
   }
 
-  return basePrompt;
+  return prompt;
 };
 
 const callAIGateway = async (
   imageBase64: string, 
   mimeType: string, 
   prompt: string,
-  apiKey: string
+  apiKey: string,
+  facePhotoBase64?: string
 ): Promise<Response> => {
+  // Build content array with document image first
+  const content: Array<{ type: string; image_url?: { url: string }; text?: string }> = [
+    {
+      type: "image_url",
+      image_url: {
+        url: `data:${mimeType || "image/jpeg"};base64,${imageBase64}`
+      }
+    }
+  ];
+
+  // Add face photo as second image if provided
+  if (facePhotoBase64) {
+    content.push({
+      type: "image_url",
+      image_url: {
+        url: `data:image/jpeg;base64,${facePhotoBase64}`
+      }
+    });
+  }
+
+  // Add the prompt text
+  content.push({
+    type: "text",
+    text: prompt
+  });
+
   return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -70,18 +114,7 @@ const callAIGateway = async (
       messages: [
         {
           role: "user",
-          content: [
-            {
-              type: "image_url",
-              image_url: {
-                url: `data:${mimeType || "image/jpeg"};base64,${imageBase64}`
-              }
-            },
-            {
-              type: "text",
-              text: prompt
-            }
-          ]
+          content
         }
       ],
       modalities: ["image", "text"]
@@ -95,7 +128,7 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, mimeType, textEdits, attempt = 1 } = await req.json() as EditRequest;
+    const { imageBase64, mimeType, textEdits, facePhotoBase64, attempt = 1 } = await req.json() as EditRequest;
 
     if (!imageBase64) {
       return new Response(
@@ -114,10 +147,12 @@ serve(async (req) => {
     }
 
     // Filter valid edits
-    const validEdits = (textEdits as TextEdit[])
+    const validEdits = (textEdits as TextEdit[] || [])
       .filter(edit => edit.originalValue !== edit.newValue && edit.newValue?.trim());
     
-    if (validEdits.length === 0) {
+    const hasFacePhoto = !!facePhotoBase64;
+    
+    if (validEdits.length === 0 && !hasFacePhoto) {
       console.log("No edits needed, returning original image");
       return new Response(
         JSON.stringify({ 
@@ -131,11 +166,13 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Attempt ${attempt}: Applying ${validEdits.length} edits with google/gemini-3-pro-image-preview`);
-    console.log("Edits:", validEdits.map(e => `"${e.originalValue}" → "${e.newValue}"`).join(", "));
+    console.log(`Attempt ${attempt}: Applying ${validEdits.length} text edits, face photo: ${hasFacePhoto}`);
+    if (validEdits.length > 0) {
+      console.log("Text edits:", validEdits.map(e => `"${e.originalValue}" → "${e.newValue}"`).join(", "));
+    }
 
-    const prompt = buildEditPrompt(validEdits, attempt);
-    const response = await callAIGateway(imageBase64, mimeType, prompt, LOVABLE_API_KEY);
+    const prompt = buildEditPrompt(validEdits, hasFacePhoto, attempt);
+    const response = await callAIGateway(imageBase64, mimeType, prompt, LOVABLE_API_KEY, facePhotoBase64);
 
     if (!response.ok) {
       const errorText = await response.text();
