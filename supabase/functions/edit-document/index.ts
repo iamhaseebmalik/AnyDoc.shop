@@ -24,7 +24,7 @@ const buildEditPrompt = (edits: TextEdit[], hasFacePhoto: boolean, attempt: numb
     ? edits.map((edit, i) => `${i + 1}. Find "${edit.originalValue}" → Replace with "${edit.newValue}"`).join('\n')
     : '';
 
-  let prompt = `You are a professional document image editor. Edit this official document with the following changes:
+  let prompt = `You are a professional document image editor. Edit this official ID document with the following changes:
 
 `;
 
@@ -46,20 +46,29 @@ ${editInstructions}
 `;
   }
 
-  prompt += `CRITICAL EDITING RULES:
+  prompt += `CRITICAL OUTPUT REQUIREMENTS:
+1. OUTPUT ONLY THE ID DOCUMENT - NO extra background, borders, shadows, or decorative elements
+2. The output must be the ID card/document ONLY, cropped exactly to its edges
+3. HIGH DEFINITION OUTPUT - Generate at the highest possible resolution and quality
+4. Maintain sharp, crisp text and clear photo quality
+5. Do NOT add any frame, background color, gradient, or padding around the document
+
+EDITING RULES:
 1. FONT MATCHING: Use the EXACT same font family, weight, size, and color as the original text
 2. POSITIONING: Keep text in the EXACT same position - do not shift or move anything
 3. PRESERVATION: Keep ALL other elements unchanged:
-   - Stamps, watermarks, seals, borders, lines, backgrounds
+   - Stamps, watermarks, seals, borders, lines, original document background
    - All other text not listed above
 4. AUTHENTICITY: The result must look like an unaltered official document
-5. QUALITY: Maintain the same image resolution and clarity`;
+5. QUALITY: Output in maximum resolution with sharp details`;
 
   if (attempt > 1) {
     prompt += `
 
 IMPORTANT: This is attempt #${attempt}. Previous attempts may not have been perfect.
 Please be EXTRA careful to:
+- Output ONLY the ID document with NO extra background or borders
+- Generate in HIGH DEFINITION with maximum clarity
 - Match fonts EXACTLY (look at the thickness, spacing, and style)
 - Place new text in the PRECISE location of the original
 - Ensure the face photo blends seamlessly with the document
