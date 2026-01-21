@@ -767,10 +767,20 @@ const Editor = () => {
                   />
                 ) : (
                   <div className="w-4/5 h-4/5 bg-primary rounded-lg shadow-lg flex flex-col p-6">
-                    <div className="text-primary-foreground text-sm font-bold mb-4">PASSPORT</div>
+                    <div className="text-primary-foreground text-sm font-bold mb-4">
+                      {selectedTemplate?.documentTypeLabel || "PASSPORT"}
+                    </div>
                     <div className="flex gap-4 flex-1">
-                      <div className="w-1/3 bg-secondary/20 rounded-md flex items-center justify-center border-2 border-dashed border-accent">
-                        <Camera className="w-8 h-8 text-accent" />
+                      <div className="w-1/3 bg-secondary/20 rounded-md flex items-center justify-center overflow-hidden border-2 border-dashed border-accent">
+                        {templatePhotoUrl ? (
+                          <img 
+                            src={templatePhotoUrl} 
+                            alt="Your face photo" 
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Camera className="w-8 h-8 text-accent" />
+                        )}
                       </div>
                       <div className="flex-1 flex flex-col gap-2">
                         <div className="h-3 bg-secondary/30 rounded w-full" />
@@ -782,7 +792,7 @@ const Editor = () => {
                 )}
                 
                 {/* Face detection overlay */}
-                {previewUrl && (
+                {(previewUrl || templatePhotoUrl) && (
                   <div className="absolute top-1/4 left-1/6 w-24 h-28 border-2 border-accent rounded-lg animate-pulse" />
                 )}
               </div>
