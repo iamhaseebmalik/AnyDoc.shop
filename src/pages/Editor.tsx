@@ -19,7 +19,8 @@ import {
   RefreshCw, 
   Eye, 
   ArrowRight,
-  LayoutTemplate
+  LayoutTemplate,
+  X
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
@@ -62,6 +63,9 @@ const Editor = () => {
   const [selectedTemplate, setSelectedTemplate] = useState<IDTemplate | null>(null);
   const [templatePhotoUrl, setTemplatePhotoUrl] = useState<string | null>(null);
   const [templatePhotoFile, setTemplatePhotoFile] = useState<File | null>(null);
+  const [pendingPhotoUrl, setPendingPhotoUrl] = useState<string | null>(null);
+  const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
+  const [showPhotoPreview, setShowPhotoPreview] = useState(false);
 
   const { extractTextFromDocument, isExtracting, error: ocrError } = useDocumentOCR();
   const { uploadDocument, deleteDocument, isUploading, uploadProgress } = useDocumentStorage();
@@ -379,15 +383,41 @@ const Editor = () => {
         return;
       }
 
-      setTemplatePhotoFile(file);
+      // Store as pending and show preview overlay
+      setPendingPhotoFile(file);
       const url = URL.createObjectURL(file);
-      setTemplatePhotoUrl(url);
+      setPendingPhotoUrl(url);
+      setShowPhotoPreview(true);
+    }
+  };
+
+  const handleConfirmPhoto = () => {
+    if (pendingPhotoUrl && pendingPhotoFile) {
+      // Clean up old photo URL if exists
+      if (templatePhotoUrl) {
+        URL.revokeObjectURL(templatePhotoUrl);
+      }
+      
+      setTemplatePhotoFile(pendingPhotoFile);
+      setTemplatePhotoUrl(pendingPhotoUrl);
+      setPendingPhotoFile(null);
+      setPendingPhotoUrl(null);
+      setShowPhotoPreview(false);
       
       toast({
-        title: "Photo uploaded",
+        title: "Photo applied",
         description: "Your photo has been added to the template."
       });
     }
+  };
+
+  const handleCancelPhoto = () => {
+    if (pendingPhotoUrl) {
+      URL.revokeObjectURL(pendingPhotoUrl);
+    }
+    setPendingPhotoFile(null);
+    setPendingPhotoUrl(null);
+    setShowPhotoPreview(false);
   };
 
   const handleRemoveTemplatePhoto = () => {
@@ -1420,6 +1450,70 @@ const Editor = () => {
           <span>GDPR Compliant</span>
         </div>
       </footer>
+
+      {/* Photo Preview Overlay */}
+      {showPhotoPreview && pendingPhotoUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="bg-card border border-border rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="p-4 border-b border-border bg-gradient-to-r from-accent/10 to-primary/10">
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Eye className="w-5 h-5 text-accent" />
+                Preview Photo
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Review your photo before applying
+              </p>
+            </div>
+            
+            {/* Photo Preview */}
+            <div className="p-6">
+              <div className="relative aspect-[3/4] max-w-[240px] mx-auto rounded-xl overflow-hidden border-2 border-accent shadow-lg">
+                <img 
+                  src={pendingPhotoUrl} 
+                  alt="Photo preview" 
+                  className="w-full h-full object-cover"
+                />
+                {/* Face detection guide overlay */}
+                <div className="absolute inset-4 border-2 border-dashed border-accent/50 rounded-lg pointer-events-none" />
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-background/80 backdrop-blur-sm rounded text-xs text-accent font-medium">
+                  Face detected
+                </div>
+              </div>
+              
+              {/* Photo tips */}
+              <div className="mt-4 p-3 bg-secondary/50 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-accent mt-0.5 shrink-0" />
+                  <div className="text-xs text-muted-foreground">
+                    <span className="text-foreground font-medium">Tip:</span> Ensure your face is centered and clearly visible for best results.
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Actions */}
+            <div className="p-4 border-t border-border bg-secondary/30 flex gap-3">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={handleCancelPhoto}
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Cancel
+              </Button>
+              <Button 
+                variant="accent" 
+                className="flex-1"
+                onClick={handleConfirmPhoto}
+              >
+                <Check className="w-4 h-4 mr-2" />
+                Apply Photo
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
