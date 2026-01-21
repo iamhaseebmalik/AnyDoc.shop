@@ -47,26 +47,30 @@ ${editInstructions}
   }
 
   prompt += `CRITICAL OUTPUT REQUIREMENTS:
-1. OUTPUT ONLY THE ID DOCUMENT - NO extra background, borders, shadows, or decorative elements
-2. The output must be the ID card/document ONLY, cropped exactly to its edges
-3. HIGH DEFINITION OUTPUT - Generate at the highest possible resolution and quality
-4. Maintain sharp, crisp text and clear photo quality
-5. Do NOT add any frame, background color, gradient, or padding around the document
+1. PRESERVE EXACT DIMENSIONS - Output MUST be the EXACT same width and height as the input image
+2. DO NOT resize, shrink, or scale the document in any way
+3. OUTPUT ONLY THE ID DOCUMENT - NO extra background, borders, shadows, or decorative elements
+4. The output must be the ID card/document ONLY, cropped exactly to its edges
+5. HIGH DEFINITION OUTPUT - Generate at the highest possible resolution and quality
+6. Maintain sharp, crisp text and clear photo quality
+7. Do NOT add any frame, background color, gradient, or padding around the document
 
 EDITING RULES:
-1. FONT MATCHING: Use the EXACT same font family, weight, size, and color as the original text
-2. POSITIONING: Keep text in the EXACT same position - do not shift or move anything
-3. PRESERVATION: Keep ALL other elements unchanged:
+1. DIMENSIONS: Keep the EXACT same image dimensions as the original - same width, height, aspect ratio
+2. FONT MATCHING: Use the EXACT same font family, weight, size, and color as the original text
+3. POSITIONING: Keep text in the EXACT same position - do not shift or move anything
+4. PRESERVATION: Keep ALL other elements unchanged:
    - Stamps, watermarks, seals, borders, lines, original document background
    - All other text not listed above
-4. AUTHENTICITY: The result must look like an unaltered official document
-5. QUALITY: Output in maximum resolution with sharp details`;
+5. AUTHENTICITY: The result must look like an unaltered official document
+6. QUALITY: Output in maximum resolution with sharp details`;
 
   if (attempt > 1) {
     prompt += `
 
 IMPORTANT: This is attempt #${attempt}. Previous attempts may not have been perfect.
 Please be EXTRA careful to:
+- MAINTAIN EXACT ORIGINAL DIMENSIONS - same width, height, no resizing
 - Output ONLY the ID document with NO extra background or borders
 - Generate in HIGH DEFINITION with maximum clarity
 - Match fonts EXACTLY (look at the thickness, spacing, and style)
