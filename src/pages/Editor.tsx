@@ -820,7 +820,18 @@ const Editor = () => {
                   <label className="text-sm font-medium text-foreground mb-3 block">
                     Replace Photo
                   </label>
-                  <Button variant="outline" className="w-full">
+                  <input
+                    type="file"
+                    id="face-photo-change"
+                    className="hidden"
+                    accept=".jpg,.jpeg,.png"
+                    onChange={handleTemplatePhotoUpload}
+                  />
+                  <Button 
+                    variant="outline" 
+                    className="w-full"
+                    onClick={() => document.getElementById('face-photo-change')?.click()}
+                  >
                     <Camera className="w-4 h-4" />
                     Upload New Face Photo
                   </Button>
