@@ -129,11 +129,12 @@ const callAIGateway = async (
   return await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      "Lovable-API-Key": apiKey,
+      "X-Lovable-AIG-SDK": "fetch",
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "google/gemini-3-pro-image-preview",
+      model: "google/gemini-3-pro-image",
       messages: [
         {
           role: "user",
