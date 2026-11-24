@@ -6,4 +6,4 @@
 - [x] Enable AnyDocBot message handling; verify a real incoming update was handled, reject unsigned Telegram updates, and test sign-in input routing on phone and desktop.
 - [ ] Crypto Pay payment notifications saved by user; verify delivery reaches the site and fulfills a real order.
 - [x] Publish registration packages: Single Edit $3 (1 credit), 10 Credits $20, Unlimited 30 Days $49 — all enabled.
-- [ ] Verify a paid registration, credential delivery, and real website sign-in end to end (packages are live; needs one real payment through @AnyDocBot).
+- [ ] Verify a paid registration, credential delivery, and real website sign-in end to end (packages are live; needs one real payment through @AnyDocBot).- Admin dashboard (packages, payments approval, users) — waiting on which account gets admin

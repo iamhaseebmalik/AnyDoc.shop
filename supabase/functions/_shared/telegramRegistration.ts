@@ -54,7 +54,17 @@ export async function verifyAndFulfill(invoiceId: number): Promise<boolean> {
   const invoices = z.object({ items: z.array(InvoiceSchema) }).parse(result);
   const invoice = invoices.items[0];
   if (!invoice || !invoiceMatchesOrder(invoice, order)) return false;
+  return fulfillOrder(order.id);
+}
 
+// Issues credentials and grants the package. Callers must have already confirmed payment
+// (provider-verified invoice, or an authenticated admin's manual approval).
+export async function fulfillOrder(orderId: string): Promise<boolean> {
+  const db = database();
+  const { data: order, error: orderError } = await db.from("registration_orders").select("*").eq("id", orderId).maybeSingle();
+  if (orderError) throw orderError;
+  if (!order) return false;
+  if (order.fulfilled_at) return true;
   const now = new Date().toISOString();
   const { data: claimed, error: claimError } = await db.from("registration_orders")
     .update({ status: "processing", processing_until: new Date(Date.now() + 120_000).toISOString() })
@@ -150,10 +160,10 @@ export async function handleTelegramUpdate(update: z.infer<typeof TelegramUpdate
     await send(chat.id, `Welcome to AnyDoc.\nView registration packages, pay with crypto, and receive your sign-in credentials here.\nAccount recovery is available only through this Telegram account.\nAnyDoc is not government affiliated. You are responsible for lawful use.${admin ? "\nYou are the administrator. Use /admin to manage packages and metadata." : ""}`, menu); return;
   }
   if (command === "/packages" || command === "/price") {
-    const { data, error } = await db.from("registration_packages").select("code,name,price_usd").eq("enabled", true).order("price_usd");
+    const { data, error } = await db.from("registration_packages").select("code,name,description,price_usd").eq("enabled", true).order("price_usd");
     if (error) throw error;
     if (!data?.length) { await send(chat.id, admin ? "No packages available yet. Use /admin to set your first price." : "Registration prices are not available yet. Please check back shortly."); return; }
-    await send(chat.id, data.map(p => `${p.name} — $${Number(p.price_usd).toFixed(2)} USD`).join("\n"), { inline_keyboard: data.map(p => [{ text: `${p.name} · $${Number(p.price_usd).toFixed(2)}`, callback_data: `/buy ${p.code}` }]) }); return;
+    await send(chat.id, data.map(p => `${p.name} — $${Number(p.price_usd).toFixed(2)} USD${p.description ? `\n${p.description}` : ""}`).join("\n\n"), { inline_keyboard: data.map(p => [{ text: `${p.name} · $${Number(p.price_usd).toFixed(2)}`, callback_data: `/buy ${p.code}` }]) }); return;
   }
 
   if (command === "/buy") {

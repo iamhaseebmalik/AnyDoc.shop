@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
+import Admin from "./pages/Admin";
 import { MobileTabBar } from "@/components/MobileTabBar";
 import { SiteMetadata } from "@/components/SiteMetadata";
 
@@ -27,6 +28,7 @@ const App = () => (
           <Route path="/editor" element={<Editor />} />
           <Route path="/history" element={<History />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/admin" element={<Admin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -43,6 +43,13 @@
       "when": 1795563379733,
       "tag": "0005_restrict_website_settings_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795563559334,
+      "tag": "0006_admin_dashboard_roles",
+      "breakpoints": true
     }
   ]
 }

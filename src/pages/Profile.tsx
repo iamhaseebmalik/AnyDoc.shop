@@ -1,6 +1,7 @@
 import { Navigate, Link } from "react-router-dom";
-import { useState } from "react";
-import { FileCheck, LogOut, UserRound } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { FileCheck, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -8,6 +9,11 @@ import { toast } from "sonner";
 export default function Profile() {
   const { user, loading, isAuthenticated, signOut } = useAuth();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle().then(({ data }) => setIsAdmin(!!data));
+  }, [user]);
 
   if (loading) return <div className="min-h-screen flex items-center justify-center" role="status" aria-label="Loading profile"><div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary" /></div>;
   if (!isAuthenticated) return <Navigate to="/" replace />;
@@ -38,6 +44,7 @@ export default function Profile() {
             <p className="mt-1 break-all text-sm text-muted-foreground">{user?.email?.endsWith("@telegram.anydoc.local") ? `@${user.email.split("@")[0]}` : user?.email}</p>
           </div>
         </div>
+        {isAdmin && <Button asChild variant="outline" className="mt-6 w-full justify-start px-3"><Link to="/admin"><ShieldCheck className="h-4 w-4" />Admin dashboard</Link></Button>}
         <Button variant="ghost" className="mt-6 w-full justify-start px-3 text-destructive hover:text-destructive" onClick={handleSignOut} disabled={isSigningOut}>
           <LogOut className="h-4 w-4" />{isSigningOut ? "Signing out…" : "Sign Out"}
         </Button>
