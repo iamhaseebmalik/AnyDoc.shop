@@ -1497,25 +1497,25 @@ const Editor = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <header className="h-16 border-b border-border bg-card flex items-center px-4">
-        <Link to="/" className="flex items-center gap-2 mr-8">
-          <Button variant="ghost" size="icon">
+      <header className="h-16 border-b border-border bg-card flex items-center px-2 sm:px-4 gap-1 sm:gap-2">
+        <Link to="/" className="flex items-center">
+          <Button variant="ghost" size="icon" className="shrink-0">
             <ArrowLeft className="w-5 h-5" />
           </Button>
         </Link>
-        
-        <div className="flex items-center gap-2">
+
+        <div className="flex items-center gap-2 shrink-0">
           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
             <Shield className="w-4 h-4 text-primary-foreground" />
           </div>
-          <span className="font-semibold text-foreground">
+          <span className="hidden sm:inline font-semibold text-foreground">
             Any<span className="text-accent">Doc</span>
           </span>
         </div>
 
         {/* Steps Indicator */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="flex items-center gap-2">
+        <div className="flex-1 flex items-center justify-center min-w-0">
+          <div className="flex items-center gap-1 sm:gap-2">
             {steps.map((step, index) => {
               const stepIndex = steps.findIndex(s => s.id === currentStep);
               const isActive = step.id === currentStep;
@@ -1523,19 +1523,19 @@ const Editor = () => {
 
               return (
                 <div key={step.id} className="flex items-center">
-                  <div 
-                    className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                      isActive 
-                        ? "bg-accent text-accent-foreground" 
-                        : isCompleted 
-                          ? "bg-primary text-primary-foreground" 
+                  <div
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all ${
+                      isActive
+                        ? "bg-accent text-accent-foreground"
+                        : isCompleted
+                          ? "bg-primary text-primary-foreground"
                           : "bg-secondary text-muted-foreground"
                     }`}
                   >
-                    <step.icon className="w-4 h-4" />
+                    <step.icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                   </div>
                   {index < steps.length - 1 && (
-                    <div className={`w-8 h-0.5 ${
+                    <div className={`w-3 sm:w-8 h-0.5 ${
                       isCompleted ? "bg-primary" : "bg-secondary"
                     }`} />
                   )}
@@ -1545,7 +1545,7 @@ const Editor = () => {
           </div>
         </div>
 
-        <div className="w-24 flex justify-end">
+        <div className="flex justify-end shrink-0">
           <UserMenu />
         </div>
       </header>
