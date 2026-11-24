@@ -9,6 +9,7 @@ import History from "./pages/History";
 import NotFound from "./pages/NotFound";
 import Profile from "./pages/Profile";
 import { MobileTabBar } from "@/components/MobileTabBar";
+import { SiteMetadata } from "@/components/SiteMetadata";
 
 const queryClient = new QueryClient();
 
@@ -17,6 +18,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <SiteMetadata />
       <BrowserRouter>
         <div className="mobile-tab-content">
         <Routes>

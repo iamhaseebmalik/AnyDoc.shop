@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { telegramLoginEmail } from "../../supabase/functions/_shared/registrationRules";
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -43,7 +44,10 @@ export const useAuth = () => {
     return { data, error };
   };
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = async (identifier: string, password: string) => {
+    const email = identifier.includes("@") && !identifier.startsWith("@")
+      ? identifier.trim()
+      : telegramLoginEmail(identifier);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,

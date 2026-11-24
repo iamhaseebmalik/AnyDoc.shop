@@ -35,7 +35,7 @@ export default function Profile() {
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"><UserRound className="h-6 w-6" /></div>
           <div className="min-w-0">
             <h2 className="break-words text-lg">{user?.user_metadata?.full_name || "Your account"}</h2>
-            <p className="mt-1 break-all text-sm text-muted-foreground">{user?.email}</p>
+            <p className="mt-1 break-all text-sm text-muted-foreground">{user?.email?.endsWith("@telegram.anydoc.local") ? `@${user.email.split("@")[0]}` : user?.email}</p>
           </div>
         </div>
         <Button variant="ghost" className="mt-6 w-full justify-start px-3 text-destructive hover:text-destructive" onClick={handleSignOut} disabled={isSigningOut}>

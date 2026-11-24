@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileCheck, Mail, Lock, Send, AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { telegramLoginEmail } from "../../supabase/functions/_shared/registrationRules";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
@@ -41,13 +42,16 @@ export default function Auth() {
     
     // Validate
     try {
-      emailSchema.parse(loginEmail);
+      if (loginEmail.includes("@") && !loginEmail.startsWith("@")) emailSchema.parse(loginEmail.trim());
+      else telegramLoginEmail(loginEmail);
       passwordSchema.parse(loginPassword);
     } catch (err) {
       if (err instanceof z.ZodError) {
         setLoginError(err.errors[0].message);
         return;
       }
+      setLoginError(err instanceof Error ? err.message : "Enter a valid username or email.");
+      return;
     }
 
     setIsSubmitting(true);
@@ -147,13 +151,16 @@ export default function Auth() {
                     )}
                     
                     <div className="space-y-2">
-                      <Label htmlFor="login-email" className="text-sm text-muted-foreground">Email</Label>
+                        <Label htmlFor="login-email" className="text-sm text-muted-foreground">Telegram username or email</Label>
                       <div className="relative group">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         <Input
                           id="login-email"
-                          type="email"
-                          placeholder="you@example.com"
+                          type="text"
+                          autoComplete="username"
+                          autoCapitalize="none"
+                          spellCheck={false}
+                          placeholder="Telegram username or email"
                           value={loginEmail}
                           onChange={(e) => setLoginEmail(e.target.value)}
                           className="pl-10 bg-secondary/50 border-white/[0.08] rounded-xl h-12 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
@@ -169,6 +176,7 @@ export default function Auth() {
                         <Input
                           id="login-password"
                           type="password"
+                          autoComplete="current-password"
                           placeholder="••••••••"
                           value={loginPassword}
                           onChange={(e) => setLoginPassword(e.target.value)}
@@ -177,6 +185,9 @@ export default function Auth() {
                         />
                       </div>
                     </div>
+                    <Button asChild variant="link" className="h-auto p-0 text-sm">
+                      <a href="https://t.me/AnyDocBot" target="_blank" rel="noopener noreferrer">Recover Telegram account password</a>
+                    </Button>
                   </CardContent>
                   
                   <CardFooter className="pb-6">

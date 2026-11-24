@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_entitlements: {
+        Row: {
+          credits: number
+          expires_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          credits?: number
+          expires_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          credits?: number
+          expires_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ai_gateway_control: {
         Row: {
           http_status: number | null
@@ -111,6 +132,8 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          telegram_user_id: number | null
+          telegram_username: string | null
           updated_at: string
           user_id: string
         }
@@ -120,6 +143,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          telegram_user_id?: number | null
+          telegram_username?: string | null
           updated_at?: string
           user_id: string
         }
@@ -129,8 +154,163 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          telegram_user_id?: number | null
+          telegram_username?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      registration_orders: {
+        Row: {
+          created_at: string
+          credits: number
+          duration_days: number
+          fulfilled_at: string | null
+          id: string
+          invoice_id: number | null
+          invoice_url: string | null
+          package_code: string
+          price_usd: number
+          processing_until: string | null
+          status: string
+          telegram_user_id: number
+        }
+        Insert: {
+          created_at?: string
+          credits?: number
+          duration_days?: number
+          fulfilled_at?: string | null
+          id?: string
+          invoice_id?: number | null
+          invoice_url?: string | null
+          package_code: string
+          price_usd: number
+          processing_until?: string | null
+          status?: string
+          telegram_user_id: number
+        }
+        Update: {
+          created_at?: string
+          credits?: number
+          duration_days?: number
+          fulfilled_at?: string | null
+          id?: string
+          invoice_id?: number | null
+          invoice_url?: string | null
+          package_code?: string
+          price_usd?: number
+          processing_until?: string | null
+          status?: string
+          telegram_user_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "registration_orders_package_code_fkey"
+            columns: ["package_code"]
+            isOneToOne: false
+            referencedRelation: "registration_packages"
+            referencedColumns: ["code"]
+          },
+          {
+            foreignKeyName: "registration_orders_telegram_user_id_fkey"
+            columns: ["telegram_user_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_accounts"
+            referencedColumns: ["telegram_user_id"]
+          },
+        ]
+      }
+      registration_packages: {
+        Row: {
+          code: string
+          credits: number
+          duration_days: number
+          enabled: boolean
+          name: string
+          price_usd: number
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          credits?: number
+          duration_days?: number
+          enabled?: boolean
+          name: string
+          price_usd: number
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          credits?: number
+          duration_days?: number
+          enabled?: boolean
+          name?: string
+          price_usd?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      telegram_accounts: {
+        Row: {
+          created_at: string
+          telegram_user_id: number
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          telegram_user_id: number
+          user_id?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          telegram_user_id?: number
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      telegram_update_receipts: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          processing_until: string | null
+          update_id: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          processing_until?: string | null
+          update_id: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          processing_until?: string | null
+          update_id?: number
+        }
+        Relationships: []
+      }
+      website_settings: {
+        Row: {
+          description: string
+          id: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          description?: string
+          id?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          description?: string
+          id?: boolean
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -139,7 +319,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      complete_registration_order: {
+        Args: { order_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

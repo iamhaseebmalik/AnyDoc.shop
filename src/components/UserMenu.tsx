@@ -56,7 +56,7 @@ export const UserMenu = () => {
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">Account</p>
             <p className="text-xs leading-none text-muted-foreground truncate">
-              {user?.email}
+              {user?.email?.endsWith("@telegram.anydoc.local") ? `@${user.email.split("@")[0]}` : user?.email}
             </p>
           </div>
         </DropdownMenuLabel>

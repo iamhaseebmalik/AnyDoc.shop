@@ -15,6 +15,20 @@
       "when": 1795547126097,
       "tag": "0001_bind_document_files_to_owner",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795562706163,
+      "tag": "0002_telegram_registration",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795562843723,
+      "tag": "0003_protect_telegram_profile_identity",
+      "breakpoints": true
     }
   ]
 }

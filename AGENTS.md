@@ -1,3 +1,6 @@
 # Architecture decisions
 - AI Gateway credit and access pauses are stored server-side and checked by every AI edge function so blocked requests stay paused across reloads and restarts.
 - Mobile navigation lives once beside the router with shared safe-area spacing; Home retains the existing auth-root behaviour and Profile displays existing account details without new backend data.
+- Telegram registration uses private service-owned identity/order tables, permanent numeric admin authorization, and normalized synthetic-email sign-in; passwords are never persisted or logged and recovery verifies the private Telegram sender.
+- Crypto callbacks are untrusted wake-up signals: fetch the invoice through the connected provider and match paid status, order payload, exact price and currency before idempotent fulfillment; never trust notification contents as payment proof.
+- Registration packages sell account access only; purchase records do not impose editing quotas. Website metadata is read from public settings after page load and on focus; bot metadata changes do not rewrite static hosting metadata.
