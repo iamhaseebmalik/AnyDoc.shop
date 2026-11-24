@@ -1509,7 +1509,7 @@ const Editor = () => {
             <Shield className="w-4 h-4 text-primary-foreground" />
           </div>
           <span className="font-semibold text-foreground">
-            onedirham<span className="text-accent">.xyz</span>
+            Any<span className="text-accent">Doc</span>
           </span>
         </div>
 

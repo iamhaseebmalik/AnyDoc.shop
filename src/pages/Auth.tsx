@@ -131,7 +131,7 @@ export default function Auth() {
                 <FileCheck className="h-5 w-5 text-background" />
               </div>
             </div>
-            <span className="text-xl font-heading font-bold text-foreground">onedirham.xyz</span>
+            <span className="text-xl font-heading font-bold text-foreground">AnyDoc</span>
           </div>
         </div>
       </header>
@@ -148,7 +148,7 @@ export default function Auth() {
                 <Sparkles className="h-5 w-5 text-neon-cyan animate-neon-pulse" />
                 <span className="text-sm font-medium text-neon-cyan">AI-Powered</span>
               </div>
-              <CardTitle className="text-2xl font-heading neon-text">Welcome to onedirham.xyz</CardTitle>
+              <CardTitle className="text-2xl font-heading neon-text">Welcome to AnyDoc</CardTitle>
               <CardDescription className="text-muted-foreground mt-2">
                 Sign in to save your editing history and access your documents
               </CardDescription>
