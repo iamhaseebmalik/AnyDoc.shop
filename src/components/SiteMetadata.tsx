@@ -5,13 +5,16 @@ export function SiteMetadata() {
   useEffect(() => {
     let active = true;
     const refresh = async () => {
-      const { data, error } = await supabase.from("website_settings").select("title,description").eq("id", true).maybeSingle();
-      if (!active || error || !data) return;
-      document.title = data.title;
+      const { data, error } = await supabase.from("website_metadata").select("title,description").limit(1);
+      if (!active || error) return;
+      const row = data?.[0];
+      if (!row) return;
+      const { title, description } = row;
+      if (title) document.title = title;
       for (const [attribute, key, content] of [
-        ["name", "description", data.description], ["property", "og:title", data.title],
-        ["property", "og:description", data.description], ["name", "twitter:title", data.title],
-        ["name", "twitter:description", data.description],
+        ["name", "description", description], ["property", "og:title", title],
+        ["property", "og:description", description], ["name", "twitter:title", title],
+        ["name", "twitter:description", description],
       ]) {
         let meta = document.head.querySelector<HTMLMetaElement>(`meta[${attribute}="${key}"]`);
         if (!meta) { meta = document.createElement("meta"); meta.setAttribute(attribute, key); document.head.appendChild(meta); }

@@ -29,6 +29,20 @@
       "when": 1795562843723,
       "tag": "0003_protect_telegram_profile_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795563285736,
+      "tag": "0004_publish_site_metadata_view",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1795563379733,
+      "tag": "0005_restrict_website_settings_writes",
+      "breakpoints": true
     }
   ]
 }

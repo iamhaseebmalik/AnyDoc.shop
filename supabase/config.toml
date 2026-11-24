@@ -8,3 +8,9 @@ verify_jwt = false
 
 [functions.edit-document]
 verify_jwt = false
+
+[functions.telegram-webhook]
+verify_jwt = false
+
+[functions.crypto-pay-webhook]
+verify_jwt = false

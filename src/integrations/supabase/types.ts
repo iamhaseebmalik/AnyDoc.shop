@@ -316,7 +316,21 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      website_metadata: {
+        Row: {
+          description: string | null
+          title: string | null
+        }
+        Insert: {
+          description?: string | null
+          title?: string | null
+        }
+        Update: {
+          description?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       complete_registration_order: {
