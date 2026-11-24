@@ -113,7 +113,7 @@ export const TelegramUpdateSchema = z.object({
 });
 
 const menu = { inline_keyboard: [[{ text: "Prices & packages", callback_data: "/packages" }], [{ text: "Payment status", callback_data: "/status" }], [{ text: "Sign in", url: "https://anydoc.shop" }]] };
-const adminHelp = "Admin controls\n/packages — list packages\n/package CODE USD_PRICE NAME — add or update a registration package\n/setprice CODE USD_PRICE — change price\n/disable CODE — stop selling a package\n/title TEXT — website browser title\n/description TEXT — website description\nExample: /package registration 5.00 Account registration\nPrices are USD. Packages grant website registration; editing quotas are not changed by these commands.";
+const adminHelp = "Admin controls\n/dashboard — get website admin sign-in for the admin dashboard\n/packages — list packages\n/package CODE USD_PRICE NAME — add or update a registration package\n/setprice CODE USD_PRICE — change price\n/disable CODE — stop selling a package\n/title TEXT — website browser title\n/description TEXT — website description\nExample: /package registration 5.00 Account registration\nPrices are USD. Packages grant website registration; editing quotas are not changed by these commands.";
 
 export async function handleTelegramUpdate(update: z.infer<typeof TelegramUpdateSchema>) {
   const actor = update.callback_query?.from ?? update.message?.from;
@@ -126,9 +126,31 @@ export async function handleTelegramUpdate(update: z.infer<typeof TelegramUpdate
   const command = rawCommand.split("@")[0].toLowerCase();
   const admin = isTelegramAdmin(actor.id, Deno.env.get("TELEGRAM_ADMIN_ID"));
 
-  if (["/admin", "/package", "/setprice", "/disable", "/title", "/description"].includes(command)) {
+  if (["/admin", "/dashboard", "/package", "/setprice", "/disable", "/title", "/description"].includes(command)) {
     if (!admin) { await send(chat.id, "Admin access is not available for this Telegram account."); return; }
     if (command === "/admin") { await send(chat.id, adminHelp); return; }
+    if (command === "/dashboard") {
+      const username = normalizeTelegramUsername(actor.username ?? "");
+      if (!username) { await send(chat.id, "Set a Telegram username first, then send /dashboard again."); return; }
+      let { data: account } = await db.from("telegram_accounts").select("*").eq("telegram_user_id", actor.id).maybeSingle();
+      if (!account) {
+        const r = await db.from("telegram_accounts").insert({ telegram_user_id: actor.id, username }).select("*").single();
+        if (r.error) throw r.error; account = r.data;
+      }
+      const password = generateRegistrationPassword();
+      const existing = await db.auth.admin.getUserById(account.user_id);
+      if (existing.data.user) {
+        const { error } = await db.auth.admin.updateUserById(account.user_id, { password });
+        if (error) throw error;
+      } else {
+        const { error } = await db.auth.admin.createUser({ id: account.user_id, email: telegramLoginEmail(account.username), password, email_confirm: true, user_metadata: { full_name: `@${account.username}` } });
+        if (error) throw error;
+      }
+      await db.from("profiles").update({ telegram_user_id: actor.id, telegram_username: account.username }).eq("user_id", account.user_id);
+      const { error: roleError } = await db.from("user_roles").upsert({ user_id: account.user_id, role: "admin" }, { onConflict: "user_id,role", ignoreDuplicates: true });
+      if (roleError) throw roleError;
+      await send(chat.id, `Admin website access ready.\n\nUsername: ${account.username}\nPassword: ${password}\n\nSign in at https://anydoc.shop, then open Profile → Admin dashboard (or https://anydoc.shop/admin).\nSending /dashboard again creates a new password.`); return;
+    }
     if (command === "/title" || command === "/description") {
       const value = z.string().trim().min(1).max(command === "/title" ? 100 : 300).parse(args.join(" "));
       const { error } = await db.from("website_settings").upsert({ id: true, [command.slice(1)]: value, updated_at: new Date().toISOString() });
