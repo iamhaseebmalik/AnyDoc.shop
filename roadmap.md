@@ -1,4 +1,4 @@
 # Current task
-- [x] Confirm the AI credit-limit cause and preserve safe gateway errors.
-- [x] Persist blocked AI access across OCR and document-editing requests.
-- [x] Verify OCR manual entry, document editing, backend state, deployment, and targeted tests.
+- [x] Add Graphite Studio phone tabs and connect the existing Home, Editor, and History destinations.
+- [x] Add the Profile destination using existing account details and sign-out.
+- [x] Verify signed-in navigation, phone spacing, and desktop visibility.

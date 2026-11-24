@@ -328,3 +328,15 @@
     input, select, textarea { font-size: 16px; }
   }
 }
+
+.mobile-tab-bar {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
+
+@media (max-width: 639px) {
+  .mobile-tab-content {
+    padding-bottom: calc(4rem + env(safe-area-inset-bottom, 0px));
+  }
+}
