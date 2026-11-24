@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { readEdgeFunctionFailure } from "@/lib/edgeFunctionErrors";
 
 interface TextEdit {
   label: string;
@@ -28,16 +29,19 @@ export const useDocumentEditor = () => {
   const [error, setError] = useState<string | null>(null);
   const [lastEditResult, setLastEditResult] = useState<EditResult | null>(null);
   const [currentAttempt, setCurrentAttempt] = useState(0);
+  const [blockedStatus, setBlockedStatus] = useState<number | null>(null);
 
   const applyEdits = async (
     file: File,
     originalFields: { id: string; label: string; value: string }[],
     editedFields: { id: string; label: string; value: string }[],
     facePhotoBase64?: string | null,
-    attempt: number = 1
+    attempt: number = 1,
+    resumeAfterAccessRestored = false,
   ): Promise<string | null> => {
     setIsEditing(true);
     setError(null);
+    setBlockedStatus(null);
     setCurrentAttempt(attempt);
 
     try {
@@ -78,14 +82,27 @@ export const useDocumentEditor = () => {
           textEdits,
           facePhotoBase64,
           attempt,
+          resumeAfterAccessRestored,
         },
       });
 
-      console.log("Edit document response:", data, "Error:", fnError);
-
       if (fnError) {
-        console.error("Function error:", fnError);
-        throw new Error(fnError.message);
+        const failure = await readEdgeFunctionFailure(
+          fnError,
+          "Document editing is unavailable. Please try again later.",
+        );
+        const blocked = failure.status === 402 || failure.status === 403 ? failure.status : null;
+        setError(failure.message);
+        setBlockedStatus(blocked);
+        setLastEditResult({
+          success: false,
+          editedImageUrl: null,
+          editsApplied: [],
+          attempt,
+          canRetry: false,
+          message: failure.message,
+        });
+        return null;
       }
 
       if (!data.success) {
@@ -102,8 +119,6 @@ export const useDocumentEditor = () => {
       }
 
       const resultUrl = data.editedImageUrl || `data:image/png;base64,${data.editedImageBase64}`;
-      console.log("Edit successful, result URL length:", resultUrl?.length);
-      
       setEditedImageUrl(resultUrl);
       setLastEditResult({
         success: true,
@@ -131,7 +146,7 @@ export const useDocumentEditor = () => {
     facePhotoBase64?: string | null
   ): Promise<string | null> => {
     const nextAttempt = currentAttempt + 1;
-    return applyEdits(file, originalFields, editedFields, facePhotoBase64, nextAttempt);
+    return applyEdits(file, originalFields, editedFields, facePhotoBase64, nextAttempt, true);
   };
 
   const fileToBase64 = (file: File): Promise<string> => {
@@ -152,6 +167,7 @@ export const useDocumentEditor = () => {
     setError(null);
     setLastEditResult(null);
     setCurrentAttempt(0);
+    setBlockedStatus(null);
   };
 
   return {
@@ -161,6 +177,7 @@ export const useDocumentEditor = () => {
     editedImageUrl,
     resetEditedImage,
     error,
+    blockedStatus,
     lastEditResult,
     currentAttempt,
   };

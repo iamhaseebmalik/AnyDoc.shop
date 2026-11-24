@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1795544851774,
+      "tag": "0000_add_ai_gateway_pause_state",
+      "breakpoints": true
+    }
+  ]
+}

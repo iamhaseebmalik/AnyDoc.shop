@@ -1,4 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  clearAiGatewayPause,
+  getAiGatewayPause,
+  pauseAiGateway,
+  readAiGatewayFailure,
+} from "../_shared/aiGatewayPause.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,13 +17,33 @@ serve(async (req) => {
   }
 
   try {
-    const { imageBase64, mimeType } = await req.json();
+    const { imageBase64, mimeType, resumeAfterAccessRestored = false } = await req.json();
 
     if (!imageBase64) {
       return new Response(
         JSON.stringify({ error: "Image data is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    if (resumeAfterAccessRestored) {
+      await clearAiGatewayPause();
+    } else {
+      let pausedState;
+      try {
+        pausedState = await getAiGatewayPause();
+      } catch {
+        return new Response(
+          JSON.stringify({ error: "AI availability could not be checked. Please try again later." }),
+          { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+      if (pausedState) {
+        return new Response(
+          JSON.stringify({ error: pausedState.message, paused: true, canRetry: false }),
+          { status: pausedState.status, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
@@ -108,23 +134,37 @@ The "allDetectedText" array is MANDATORY - it must contain EVERY text element yo
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+      const fallbackMessage = response.status === 402
+        ? "AI usage limit reached. Please add credits to continue."
+        : response.status === 403
+          ? "AI access is blocked. Please restore access before retrying."
+          : response.status === 429
+            ? "Rate limit exceeded. Please try again later."
+            : "AI document extraction failed. Please try again.";
+      const message = await readAiGatewayFailure(response, fallbackMessage);
+
+      if (response.status === 402 || response.status === 403) {
+        try {
+          await pauseAiGateway(response.status, message);
+        } catch {
+          console.error("Could not persist the AI access pause");
+        }
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI usage limit reached. Please add credits to continue." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+
+      const responseHeaders: Record<string, string> = {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+      };
+      const retryAfter = response.headers.get("Retry-After");
+      if (retryAfter) responseHeaders["Retry-After"] = retryAfter;
+
       return new Response(
-        JSON.stringify({ error: "Failed to process document" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({
+          error: message,
+          paused: response.status === 402 || response.status === 403,
+          canRetry: response.status === 429 || response.status >= 500,
+        }),
+        { status: response.status, headers: responseHeaders },
       );
     }
 

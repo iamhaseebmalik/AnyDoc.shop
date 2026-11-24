@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { readEdgeFunctionFailure } from "@/lib/edgeFunctionErrors";
 
 export interface AdditionalField {
   label: string;
@@ -60,14 +61,25 @@ export interface ExtractedDocumentData {
   rawText?: string;
 }
 
+export interface DocumentOCRResult {
+  data: ExtractedDocumentData | null;
+  error: string | null;
+  blockedStatus: number | null;
+}
+
 export const useDocumentOCR = () => {
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractedData, setExtractedData] = useState<ExtractedDocumentData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [blockedStatus, setBlockedStatus] = useState<number | null>(null);
 
-  const extractTextFromDocument = async (file: File): Promise<ExtractedDocumentData | null> => {
+  const extractTextFromDocument = async (
+    file: File,
+    resumeAfterAccessRestored = false,
+  ): Promise<DocumentOCRResult> => {
     setIsExtracting(true);
     setError(null);
+    setBlockedStatus(null);
 
     try {
       // Convert file to base64
@@ -79,27 +91,37 @@ export const useDocumentOCR = () => {
         body: {
           imageBase64: base64,
           mimeType: file.type,
+          resumeAfterAccessRestored,
         },
       });
 
       if (fnError) {
-        console.error("OCR function error:", fnError);
-        throw new Error(fnError.message);
+        const failure = await readEdgeFunctionFailure(
+          fnError,
+          "Text extraction is unavailable. Please try again later.",
+        );
+        const blocked = failure.status === 402 || failure.status === 403 ? failure.status : null;
+        setError(failure.message);
+        setBlockedStatus(blocked);
+        return { data: null, error: failure.message, blockedStatus: blocked };
       }
 
       if (!data.success) {
-        console.error("OCR extraction failed:", data.error);
-        throw new Error(data.error || "Failed to extract text");
+        const errorMessage = typeof data.error === "string" && data.error
+          ? data.error
+          : "Failed to extract text from the document.";
+        setError(errorMessage);
+        return { data: null, error: errorMessage, blockedStatus: null };
       }
 
-      console.log("OCR extraction successful:", data.data);
       setExtractedData(data.data);
-      return data.data;
+      return { data: data.data, error: null, blockedStatus: null };
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to extract document text";
-      console.error("OCR error:", errorMessage);
+      const errorMessage = err instanceof Error
+        ? err.message
+        : "The document could not be prepared for text extraction.";
       setError(errorMessage);
-      return null;
+      return { data: null, error: errorMessage, blockedStatus: null };
     } finally {
       setIsExtracting(false);
     }
@@ -125,5 +147,6 @@ export const useDocumentOCR = () => {
     extractedData,
     setExtractedData,
     error,
+    blockedStatus,
   };
 };

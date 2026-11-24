@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_gateway_control: {
+        Row: {
+          http_status: number | null
+          paused: boolean
+          safe_message: string | null
+          state_key: string
+          updated_at: string
+        }
+        Insert: {
+          http_status?: number | null
+          paused?: boolean
+          safe_message?: string | null
+          state_key: string
+          updated_at?: string
+        }
+        Update: {
+          http_status?: number | null
+          paused?: boolean
+          safe_message?: string | null
+          state_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       document_uploads: {
         Row: {
           created_at: string

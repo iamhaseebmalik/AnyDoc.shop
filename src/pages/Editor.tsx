@@ -67,9 +67,22 @@ const Editor = () => {
   const [pendingPhotoFile, setPendingPhotoFile] = useState<File | null>(null);
   const [showPhotoPreview, setShowPhotoPreview] = useState(false);
 
-  const { extractTextFromDocument, isExtracting, error: ocrError } = useDocumentOCR();
+  const {
+    extractTextFromDocument,
+    isExtracting,
+    error: ocrError,
+    blockedStatus: ocrBlockedStatus,
+  } = useDocumentOCR();
   const { uploadDocument, deleteDocument, isUploading, uploadProgress } = useDocumentStorage();
-  const { applyEdits, retryEdits, isEditing, error: editError, lastEditResult, currentAttempt } = useDocumentEditor();
+  const {
+    applyEdits,
+    retryEdits,
+    isEditing,
+    error: editError,
+    blockedStatus: editBlockedStatus,
+    lastEditResult,
+    currentAttempt,
+  } = useDocumentEditor();
   const { saveToHistory, isAuthenticated } = useEditingHistory();
   const [showComparison, setShowComparison] = useState(false);
   const [historySaved, setHistorySaved] = useState(false);
@@ -264,7 +277,8 @@ const Editor = () => {
 
     // Only process images for OCR (PDFs would need different handling)
     if (file.type !== "application/pdf") {
-      const extractedData = await extractTextFromDocument(file);
+      const extraction = await extractTextFromDocument(file);
+      const extractedData = extraction.data;
       
       if (extractedData) {
         const fields = mapExtractedDataToFields(extractedData);
@@ -277,9 +291,13 @@ const Editor = () => {
         setCurrentStep("photo");
       } else {
         toast({
-          title: "Detection complete",
-          description: "Document detected. Manual text entry may be required.",
-          variant: "default"
+          title: extraction.blockedStatus === 402
+            ? "AI credits unavailable"
+            : extraction.blockedStatus === 403
+              ? "AI access unavailable"
+              : "Text extraction unavailable",
+          description: extraction.error || "You can enter document details manually.",
+          variant: extraction.blockedStatus ? "destructive" : "default",
         });
         setTextFields([
           { id: "name", label: "Full Name", value: "", originalValue: "", editable: true },
@@ -307,6 +325,56 @@ const Editor = () => {
       });
       setCurrentStep("photo");
     }
+  };
+
+  const handleRetryOCR = async () => {
+    if (!uploadedFile) return;
+
+    const extraction = await extractTextFromDocument(uploadedFile, true);
+    if (extraction.data) {
+      const fields = mapExtractedDataToFields(extraction.data);
+      setTextFields(fields);
+      toast({
+        title: "Text extraction complete",
+        description: `Extracted ${fields.length} text fields from document.`,
+      });
+      return;
+    }
+
+    toast({
+      title: extraction.blockedStatus === 402
+        ? "AI credits are still unavailable"
+        : extraction.blockedStatus === 403
+          ? "AI access is still blocked"
+          : "Text extraction failed",
+      description: extraction.error || "Please try again later.",
+      variant: "destructive",
+    });
+  };
+
+  const renderOcrFailureNotice = () => {
+    if (!ocrError) return null;
+
+    return (
+      <div role="alert" className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-4">
+        <p className="text-sm text-destructive">{ocrError}</p>
+        {ocrBlockedStatus && uploadedFile && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-3"
+            disabled={isExtracting}
+            onClick={handleRetryOCR}
+          >
+            {isExtracting
+              ? "Checking AI access..."
+              : ocrBlockedStatus === 402
+                ? "Credits restored — retry text extraction"
+                : "AI access restored — retry text extraction"}
+          </Button>
+        )}
+      </div>
+    );
   };
 
   const handleResetEditor = async () => {
@@ -830,6 +898,7 @@ const Editor = () => {
 
             {/* Controls */}
             <div className="bg-card rounded-xl border border-border p-6 space-y-6">
+              {renderOcrFailureNotice()}
               <div>
                 <h3 className="font-semibold text-foreground mb-4">Photo Settings</h3>
                 
@@ -927,6 +996,7 @@ const Editor = () => {
 
             {/* Text Editor */}
             <div className="bg-card rounded-xl border border-border p-6">
+              {renderOcrFailureNotice()}
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-foreground">All Detected Text Fields</h3>
                 <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded">
@@ -1302,7 +1372,13 @@ const Editor = () => {
                       disabled={isEditing}
                     >
                       <RefreshCw className={`w-4 h-4 mr-2 ${isEditing ? 'animate-spin' : ''}`} />
-                      {isEditing ? 'Retrying...' : 'Not Satisfied? Retry'}
+                      {isEditing
+                        ? 'Retrying...'
+                        : editBlockedStatus === 402
+                          ? 'Credits restored — retry'
+                          : editBlockedStatus === 403
+                            ? 'AI access restored — retry'
+                            : 'Not Satisfied? Retry'}
                     </Button>
                   </div>
                 </div>
@@ -1370,9 +1446,14 @@ const Editor = () => {
                       variant="outline" 
                       size="sm" 
                       onClick={handleRetryEdits}
+                      disabled={isEditing}
                     >
                       <RefreshCw className="w-4 h-4 mr-2" />
-                      Try Again
+                      {editBlockedStatus === 402
+                        ? "Credits restored — retry"
+                        : editBlockedStatus === 403
+                          ? "AI access restored — retry"
+                          : "Try Again"}
                     </Button>
                   </div>
                 )}
