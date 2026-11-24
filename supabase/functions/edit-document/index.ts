@@ -225,9 +225,6 @@ serve(async (req) => {
     }
 
     console.log(`Attempt ${attempt}: Applying ${validEdits.length} text edits, face photo: ${hasFacePhoto}`);
-    if (validEdits.length > 0) {
-      console.log("Text edits:", validEdits.map(e => `"${e.originalValue}" → "${e.newValue}"`).join(", "));
-    }
 
     const prompt = buildEditPrompt(validEdits, hasFacePhoto, attempt);
     const response = await callAIGateway(imageBase64, mimeType, prompt, LOVABLE_API_KEY, facePhotoBase64);
@@ -275,7 +272,7 @@ serve(async (req) => {
     const editedImageUrl = images?.[0]?.image_url?.url;
     
     if (!editedImageUrl) {
-      console.error("No edited image in response. Full response:", JSON.stringify(data).slice(0, 500));
+      console.error("No edited image in response");
       return new Response(
         JSON.stringify({ 
           success: false, 

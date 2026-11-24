@@ -178,7 +178,6 @@ The "allDetectedText" array is MANDATORY - it must contain EVERY text element yo
       );
     }
 
-    console.log("Raw AI response:", content.substring(0, 500));
 
     // Parse the JSON response from the AI
     let extractedData;

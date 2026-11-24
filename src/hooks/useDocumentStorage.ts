@@ -33,14 +33,13 @@ export const useDocumentStorage = () => {
 
     try {
       const sessionId = getSessionId();
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id;
+      if (!userId) throw new Error("Please sign in to upload documents.");
       const fileExt = file.name.split(".").pop();
-      const fileName = `${sessionId}/${crypto.randomUUID()}.${fileExt}`;
+      const fileName = `${userId}/${crypto.randomUUID()}.${fileExt}`;
 
       setUploadProgress(20);
-
-      // Get current user session
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id || null;
 
       // Upload to storage
       const { data: uploadData, error: uploadError } = await supabase.storage
