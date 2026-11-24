@@ -6,17 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileCheck, Mail, Lock, User, AlertCircle, Sparkles } from "lucide-react";
+import { FileCheck, Mail, Lock, Send, AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
-const nameSchema = z.string().min(2, "Name must be at least 2 characters").optional();
+const registrationContactUrl = "https://t.me/Anonymousdxb";
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { signIn, signUp, isAuthenticated, loading } = useAuth();
+  const { signIn, isAuthenticated, loading } = useAuth();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
@@ -24,13 +24,9 @@ export default function Auth() {
   // Form state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
-  const [signupName, setSignupName] = useState("");
   
   // Error state
   const [loginError, setLoginError] = useState("");
-  const [signupError, setSignupError] = useState("");
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -66,38 +62,6 @@ export default function Auth() {
       }
     } else {
       toast.success("Welcome back!");
-      navigate("/editor");
-    }
-  };
-
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSignupError("");
-    
-    // Validate
-    try {
-      emailSchema.parse(signupEmail);
-      passwordSchema.parse(signupPassword);
-      if (signupName) nameSchema.parse(signupName);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        setSignupError(err.errors[0].message);
-        return;
-      }
-    }
-
-    setIsSubmitting(true);
-    const { error } = await signUp(signupEmail, signupPassword, signupName || undefined);
-    setIsSubmitting(false);
-
-    if (error) {
-      if (error.message.includes("already registered")) {
-        setSignupError("This email is already registered. Please log in instead.");
-      } else {
-        setSignupError(error.message);
-      }
-    } else {
-      toast.success("Account created successfully!");
       navigate("/editor");
     }
   };
@@ -235,81 +199,31 @@ export default function Auth() {
               </TabsContent>
               
               <TabsContent value="signup" className="mt-0">
-                <form onSubmit={handleSignup}>
-                  <CardContent className="space-y-4 pt-6">
-                    {signupError && (
-                      <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm p-3 rounded-xl flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                        {signupError}
-                      </div>
-                    )}
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-name" className="text-sm text-muted-foreground">Full Name (optional)</Label>
-                      <div className="relative group">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                        <Input
-                          id="signup-name"
-                          type="text"
-                          placeholder="John Doe"
-                          value={signupName}
-                          onChange={(e) => setSignupName(e.target.value)}
-                          className="pl-10 bg-secondary/50 border-white/[0.08] rounded-xl h-12 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-email" className="text-sm text-muted-foreground">Email</Label>
-                      <div className="relative group">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                        <Input
-                          id="signup-email"
-                          type="email"
-                          placeholder="you@example.com"
-                          value={signupEmail}
-                          onChange={(e) => setSignupEmail(e.target.value)}
-                          className="pl-10 bg-secondary/50 border-white/[0.08] rounded-xl h-12 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                          required
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="signup-password" className="text-sm text-muted-foreground">Password</Label>
-                      <div className="relative group">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                        <Input
-                          id="signup-password"
-                          type="password"
-                          placeholder="••••••••"
-                          value={signupPassword}
-                          onChange={(e) => setSignupPassword(e.target.value)}
-                          className="pl-10 bg-secondary/50 border-white/[0.08] rounded-xl h-12 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                          required
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">Must be at least 6 characters</p>
-                    </div>
-                  </CardContent>
-                  
-                  <CardFooter className="pb-6">
-                    <Button 
-                      type="submit" 
-                      className="w-full h-12 rounded-xl font-semibold gradient-neon text-background hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all duration-180 glow-sm" 
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? (
-                        <span className="flex items-center gap-2">
-                          <span className="h-4 w-4 border-2 border-background/30 border-t-background rounded-full animate-spin" />
-                          Creating account...
-                        </span>
-                      ) : (
-                        "Create Account"
-                      )}
+                <CardContent className="space-y-5 pt-7 pb-7 text-center">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Send className="h-6 w-6" aria-hidden="true" />
+                  </div>
+                  <div className="space-y-2">
+                    <h2 className="text-xl font-heading">Request registration</h2>
+                    <p className="text-sm text-muted-foreground">
+                      Contact the admin on Telegram to request an AnyDoc account.
+                    </p>
+                  </div>
+                  {registrationContactUrl ? (
+                    <Button asChild className="w-full h-12">
+                      <a href={registrationContactUrl} target="_blank" rel="noopener noreferrer">
+                        <Send aria-hidden="true" /> Contact admin on Telegram
+                      </a>
                     </Button>
-                  </CardFooter>
-                </form>
+                  ) : (
+                    <div className="space-y-2">
+                      <Button disabled className="w-full h-12">
+                        <Send aria-hidden="true" /> Contact admin on Telegram
+                      </Button>
+                      <p className="text-xs text-muted-foreground">Admin contact will be available soon.</p>
+                    </div>
+                  )}
+                </CardContent>
               </TabsContent>
             </Tabs>
           </Card>
@@ -319,7 +233,7 @@ export default function Auth() {
       {/* Footer */}
       <footer className="relative z-10 border-t border-white/[0.08] py-6 glass">
         <p className="text-center text-sm text-muted-foreground">
-          By signing up, you agree to our Terms of Service and Privacy Policy
+          By using AnyDoc, you agree to our Terms of Service and Privacy Policy
         </p>
       </footer>
     </div>
