@@ -12,7 +12,7 @@ import { z } from "zod";
 
 const emailSchema = z.string().email("Please enter a valid email address");
 const passwordSchema = z.string().min(6, "Password must be at least 6 characters");
-const registrationContactUrl = "https://t.me/Anonymousdxb";
+const registrationContactUrl = "https://t.me/AnyDocBot";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -206,19 +206,19 @@ export default function Auth() {
                   <div className="space-y-2">
                     <h2 className="text-xl font-heading">Request registration</h2>
                     <p className="text-sm text-muted-foreground">
-                      Contact the admin on Telegram to request an AnyDoc account.
+                      Open AnyDocBot on Telegram to request an AnyDoc account.
                     </p>
                   </div>
                   {registrationContactUrl ? (
                     <Button asChild className="w-full h-12">
                       <a href={registrationContactUrl} target="_blank" rel="noopener noreferrer">
-                        <Send aria-hidden="true" /> Contact admin on Telegram
+                        <Send aria-hidden="true" /> Open AnyDocBot on Telegram
                       </a>
                     </Button>
                   ) : (
                     <div className="space-y-2">
                       <Button disabled className="w-full h-12">
-                        <Send aria-hidden="true" /> Contact admin on Telegram
+                        <Send aria-hidden="true" /> Open AnyDocBot on Telegram
                       </Button>
                       <p className="text-xs text-muted-foreground">Admin contact will be available soon.</p>
                     </div>
