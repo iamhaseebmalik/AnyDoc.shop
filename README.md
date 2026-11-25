@@ -79,13 +79,13 @@ These are public client settings, not administrator credentials. Never reuse Any
 | Database and authentication | Your own profiles, roles, document tracking, history, registration tables, metadata view, and access policies |
 | Storage | Private buckets, account ownership checks, and signed URL access |
 | AI | Lovable AI access and sufficient usage credits |
-| Telegram | Your own bot connection, permanent numeric administrator ID, and webhook secret |
+| Telegram | Your own bot connection, permanent numeric administrator ID, and protected webhook configuration |
 | Crypto Pay | Your own app connection and payment-notification configuration |
 | Retention | A scheduled invocation of the protected cleanup function; verify expired files and records are removed |
 
 Database changes are under `drizzle/migrations/`. **They are incremental changes to an existing application, not a complete fresh-database bootstrap:** the earliest included migration assumes some original tables already exist. Inspect and provision the baseline schema before applying them to an empty database. Generated TypeScript types are not a substitute for schema creation.
 
-Deploy the functions in `supabase/functions/` to your own backend. Configure server-only secrets through **Project Settings → Secrets** or the appropriate service connection, never in source files. Current function code expects `LOVABLE_API_KEY`, `TELEGRAM_API_KEY`, `UDC_CRYPTO_PAY_API_KEY`, `TELEGRAM_ADMIN_ID`, and `TELEGRAM_WEBHOOK_SECRET`, alongside backend-managed server credentials. Connector keys are for the Lovable connector gateway, not direct provider calls.
+Deploy the functions in `supabase/functions/` to your own backend. Configure server-only secrets through **Project Settings → Secrets** or the appropriate service connection, never in source files. Current function code expects `LOVABLE_API_KEY`, `TELEGRAM_API_KEY`, `UDC_CRYPTO_PAY_API_KEY`, and `TELEGRAM_ADMIN_ID`, alongside backend-managed server credentials. The Telegram webhook secret is derived server-side from the bot connection key. Connector keys are for the Lovable connector gateway, not direct provider calls.
 
 See [TELEGRAM_BOT.md](TELEGRAM_BOT.md) for command behavior and webhook setup. Use your own endpoint addresses and numeric administrator identity; changing a display username alone does not change authorization.
 
