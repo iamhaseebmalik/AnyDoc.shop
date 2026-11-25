@@ -7,3 +7,9 @@
 - [ ] Crypto Pay payment notifications saved by user; verify delivery reaches the site and fulfills a real order.
 - [x] Publish registration packages: Single Edit $3 (1 credit), 10 Credits $20, Unlimited 30 Days $49 — all enabled.
 - [ ] Verify a paid registration, credential delivery, and real website sign-in end to end (packages are live; needs one real payment through @AnyDocBot).- Admin dashboard (packages, payments approval, users) — admin gets access via /dashboard in bot
+
+
+# Repository refresh
+- [x] Replace the MVP brief with a polished README covering product use, setup, customization, deployment, and reuse limitations.
+- [ ] Rename the connected GitHub repository to AnyDoc.shop — requires repository Settings access on GitHub; no accessible GitHub connection here.
+- [ ] Confirm full GitHub synchronization — requires the connection status and branch controls in Project settings → Git.
