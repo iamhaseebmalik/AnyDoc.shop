@@ -35,8 +35,19 @@ async function gateway(connector: "telegram" | "udc_crypto_pay", method: string,
   return data.result;
 }
 
-export async function send(chatId: number, text: string, keyboard?: unknown) {
-  return gateway("telegram", "sendMessage", { chat_id: chatId, text, ...(keyboard ? { reply_markup: keyboard } : {}), protect_content: true });
+const esc = (v: unknown) => String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const LINE = "━━━━━━━━━━━━━━━";
+
+export async function send(chatId: number, text: string, keyboard?: unknown, html = false) {
+  return gateway("telegram", "sendMessage", { chat_id: chatId, text, ...(html ? { parse_mode: "HTML", link_preview_options: { is_disabled: true } } : {}), ...(keyboard ? { reply_markup: keyboard } : {}), protect_content: true });
+}
+
+// Credential card: tap-to-copy <code> blocks plus native copy buttons (copying needs protect_content off).
+export async function sendCredentials(chatId: number, title: string, username: string, password: string | undefined, note: string) {
+  const text = `<b>${esc(title)}</b>\n${LINE}\n👤 <b>Username</b>\n<code>${esc(username)}</code>\n${password ? `\n🔑 <b>Password</b>\n<code>${esc(password)}</code>\n` : ""}${LINE}\n<i>Tap a value or a button below to copy it.</i>\n\n${note}`;
+  const copyRow = [{ text: "📋 Copy username", copy_text: { text: username } }, ...(password ? [{ text: "📋 Copy password", copy_text: { text: password } }] : [])];
+  return gateway("telegram", "sendMessage", { chat_id: chatId, text, parse_mode: "HTML", link_preview_options: { is_disabled: true },
+    reply_markup: { inline_keyboard: [copyRow, [{ text: "🌐 Sign in to AnyDoc", url: "https://anydoc.shop" }]] } });
 }
 
 const InvoiceSchema = z.object({
@@ -87,9 +98,8 @@ export async function fulfillOrder(orderId: string): Promise<boolean> {
     }
     const { error: profileError } = await db.from("profiles").update({ telegram_user_id: account.telegram_user_id, telegram_username: account.username }).eq("user_id", account.user_id);
     if (profileError) throw profileError;
-    await send(account.telegram_user_id, password
-      ? `Payment confirmed. Your AnyDoc account is ready.\n\nUsername: ${account.username}\nPassword: ${password}\n\nSign in: https://anydoc.shop\nKeep this password private. Use /reset in this private chat to get a new password.`
-      : `Payment confirmed. Your package is registered.\nUsername: ${account.username}\nSign in: https://anydoc.shop\nIf you need a new password, use /reset.`);
+    await sendCredentials(account.telegram_user_id, password ? "✅ Payment confirmed — your AnyDoc account is ready" : "✅ Payment confirmed — package added",
+      account.username, password, password ? "🔒 Keep this password private. Send /reset anytime for a new one." : "Need a new password? Send /reset.");
     const { error } = await db.rpc("complete_registration_order", { order_id: order.id });
     if (error) throw error;
     return true;
@@ -112,7 +122,7 @@ export const TelegramUpdateSchema = z.object({
   }).optional(),
 });
 
-const menu = { inline_keyboard: [[{ text: "Prices & packages", callback_data: "/packages" }], [{ text: "Payment status", callback_data: "/status" }], [{ text: "Sign in", url: "https://anydoc.shop" }]] };
+const menu = { inline_keyboard: [[{ text: "💎 Prices & packages", callback_data: "/packages" }], [{ text: "🧾 Payment status", callback_data: "/status" }, { text: "🔄 Reset password", callback_data: "/reset" }], [{ text: "🌐 Open AnyDoc", url: "https://anydoc.shop" }, { text: "💬 Support", url: "https://t.me/Anonymousdxb" }]] };
 const adminHelp = "Admin controls\n/dashboard — get website admin sign-in for the admin dashboard\n/packages — list packages\n/package CODE USD_PRICE NAME — add or update a registration package\n/setprice CODE USD_PRICE — change price\n/disable CODE — stop selling a package\n/title TEXT — website browser title\n/description TEXT — website description\nExample: /package registration 5.00 Account registration\nPrices are USD. Packages grant website registration; editing quotas are not changed by these commands.";
 
 export async function handleTelegramUpdate(update: z.infer<typeof TelegramUpdateSchema>) {
@@ -149,7 +159,7 @@ export async function handleTelegramUpdate(update: z.infer<typeof TelegramUpdate
       await db.from("profiles").update({ telegram_user_id: actor.id, telegram_username: account.username }).eq("user_id", account.user_id);
       const { error: roleError } = await db.from("user_roles").upsert({ user_id: account.user_id, role: "admin" }, { onConflict: "user_id,role", ignoreDuplicates: true });
       if (roleError) throw roleError;
-      await send(chat.id, `Admin website access ready.\n\nUsername: ${account.username}\nPassword: ${password}\n\nSign in at https://anydoc.shop, then open Profile → Admin dashboard (or https://anydoc.shop/admin).\nSending /dashboard again creates a new password.`); return;
+      await sendCredentials(chat.id, "🛡 Admin website access ready", account.username, password, "Sign in, then open <b>Profile → Admin dashboard</b>.\nSending /dashboard again creates a new password."); return;
     }
     if (command === "/title" || command === "/description") {
       const value = z.string().trim().min(1).max(command === "/title" ? 100 : 300).parse(args.join(" "));
@@ -179,13 +189,13 @@ export async function handleTelegramUpdate(update: z.infer<typeof TelegramUpdate
   }
 
   if (command === "/start" || command === "/help" || !text) {
-    await send(chat.id, `Welcome to AnyDoc.\nView registration packages, pay with crypto, and receive your sign-in credentials here.\nAccount recovery is available only through this Telegram account.\nAnyDoc is not government affiliated. You are responsible for lawful use.${admin ? "\nYou are the administrator. Use /admin to manage packages and metadata." : ""}`, menu); return;
+    await send(chat.id, `<b>👋 Welcome to AnyDoc</b>\n<i>AI passport &amp; ID photo editor</i>\n${LINE}\n<b>How it works</b>\n1️⃣ Pick a package\n2️⃣ Pay securely with crypto\n3️⃣ Get your sign-in details here instantly\n${LINE}\n🔐 Recovery works only from this Telegram account.\n⚖️ <i>AnyDoc is not government affiliated. You are responsible for lawful use.</i>${admin ? "\n\n🛡 <b>Admin:</b> /admin to manage packages, /dashboard for website access." : ""}`, menu, true); return;
   }
   if (command === "/packages" || command === "/price") {
     const { data, error } = await db.from("registration_packages").select("code,name,description,price_usd").eq("enabled", true).order("price_usd");
     if (error) throw error;
     if (!data?.length) { await send(chat.id, admin ? "No packages available yet. Use /admin to set your first price." : "Registration prices are not available yet. Please check back shortly."); return; }
-    await send(chat.id, data.map(p => `${p.name} — $${Number(p.price_usd).toFixed(2)} USD${p.description ? `\n${p.description}` : ""}`).join("\n\n"), { inline_keyboard: data.map(p => [{ text: `${p.name} · $${Number(p.price_usd).toFixed(2)}`, callback_data: `/buy ${p.code}` }]) }); return;
+    await send(chat.id, `<b>💎 AnyDoc packages</b>\n${LINE}\n` + data.map(p => `<b>${esc(p.name)}</b> — <code>$${Number(p.price_usd).toFixed(2)}</code>${p.description ? `\n<i>${esc(p.description)}</i>` : ""}`).join("\n\n") + `\n${LINE}\nTap a package to get your crypto invoice.`, { inline_keyboard: data.map(p => [{ text: `🛒 ${p.name} · $${Number(p.price_usd).toFixed(2)}`, callback_data: `/buy ${p.code}` }]) }, true); return;
   }
 
   if (command === "/buy") {
@@ -206,7 +216,7 @@ export async function handleTelegramUpdate(update: z.infer<typeof TelegramUpdate
     // A username remains the login handle assigned on first registration; permanent ID controls recovery.
     const { data: pending, error: pendingError } = await db.from("registration_orders").select("*").eq("telegram_user_id", actor.id).eq("package_code", code).eq("status", "pending").gt("created_at", new Date(Date.now() - 3_600_000).toISOString()).not("invoice_url", "is", null).order("created_at", { ascending: false }).limit(1).maybeSingle();
     if (pendingError) throw pendingError;
-    if (pending?.invoice_url) { await send(chat.id, "Your payment invoice is ready.", { inline_keyboard: [[{ text: "Pay with crypto", url: pending.invoice_url }], [{ text: "Check payment", callback_data: "/status" }]] }); return; }
+    if (pending?.invoice_url) { await send(chat.id, "🧾 Your payment invoice is ready.", { inline_keyboard: [[{ text: "💳 Pay with crypto", url: pending.invoice_url }], [{ text: "🔁 Check payment", callback_data: "/status" }]] }); return; }
     const { data: order, error } = await db.from("registration_orders").insert({ telegram_user_id: actor.id, package_code: code, price_usd: pkg.price_usd, credits: pkg.credits, duration_days: pkg.duration_days }).select("*").single();
     if (error) throw error;
     const invoice = z.object({ invoice_id: z.number().int().positive(), bot_invoice_url: z.string().url() }).parse(await gateway("udc_crypto_pay", "createInvoice", {
@@ -215,7 +225,7 @@ export async function handleTelegramUpdate(update: z.infer<typeof TelegramUpdate
     }));
     const { error: saveError } = await db.from("registration_orders").update({ invoice_id: invoice.invoice_id, invoice_url: invoice.bot_invoice_url }).eq("id", order.id);
     if (saveError) throw saveError;
-    await send(chat.id, `${pkg.name}\n$${Number(pkg.price_usd).toFixed(2)} USD\nSign-in username: ${account.username}\nPay using the invoice below. Credentials are issued only after verified payment.`, { inline_keyboard: [[{ text: "Pay with crypto", url: invoice.bot_invoice_url }], [{ text: "Check payment", callback_data: "/status" }]] }); return;
+    await send(chat.id, `<b>🧾 Invoice ready</b>\n${LINE}\n📦 ${esc(pkg.name)}\n💵 <b>$${Number(pkg.price_usd).toFixed(2)} USD</b>\n👤 Username: <code>${esc(account.username)}</code>\n${LINE}\n⏱ Valid for 1 hour. Your sign-in details arrive here automatically after payment.`, { inline_keyboard: [[{ text: "💳 Pay with crypto", url: invoice.bot_invoice_url }], [{ text: "🔁 Check payment", callback_data: "/status" }]] }, true); return;
   }
   if (command === "/status") {
     const { data: orders, error } = await db.from("registration_orders").select("invoice_id,status").eq("telegram_user_id", actor.id).order("created_at", { ascending: false }).limit(5);
@@ -223,7 +233,7 @@ export async function handleTelegramUpdate(update: z.infer<typeof TelegramUpdate
     if (!orders?.length) { await send(chat.id, "No registration orders yet. Use /packages."); return; }
     let paid = false;
     for (const order of orders) if (order.invoice_id) paid = await verifyAndFulfill(order.invoice_id) || paid;
-    await send(chat.id, paid ? "Payment confirmed. Sign in at https://anydoc.shop. Use /reset if you need a new password." : "Payment is not confirmed yet. Complete your invoice and check again."); return;
+    await send(chat.id, paid ? "✅ Payment confirmed. Sign in at https://anydoc.shop. Use /reset if you need a new password." : "⏳ Payment is not confirmed yet. Complete your invoice and check again."); return;
   }
   if (command === "/reset") {
     const { data: account, error } = await db.from("telegram_accounts").select("user_id,username").eq("telegram_user_id", actor.id).maybeSingle();
@@ -234,7 +244,7 @@ export async function handleTelegramUpdate(update: z.infer<typeof TelegramUpdate
     const password = generateRegistrationPassword();
     const { error: resetError } = await db.auth.admin.updateUserById(account.user_id, { password });
     if (resetError) throw resetError;
-    await send(chat.id, `Your new AnyDoc password\nUsername: ${account.username}\nPassword: ${password}\nSign in: https://anydoc.shop\nKeep this password private.`); return;
+    await sendCredentials(chat.id, "🔄 Your new AnyDoc password", account.username, password, "🔒 Keep this password private."); return;
   }
   await send(chat.id, "Use /packages to view prices, /status to check payment, or /reset for account recovery.", menu);
 }
